@@ -1,0 +1,29 @@
+FROM openjdk:8
+
+WORKDIR /project
+
+COPY target/hydrology-admin.jar /project/
+
+COPY src/main/resources/ /project/resources/
+
+ENV LOG_FILE=/opt/my-app/logs/app.log
+
+RUN mkdir -p /opt/my-app/logs
+
+ENV JAVA_OPTS="-Dlogging.file=${LOG_FILE} \
+-Duser.timezone=Asia/Shanghai \
+-Xms1g -Xmx1g \
+-XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=384M \
+-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/my-app/logs \
+-XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=100M \
+-Xloggc:/opt/my-app/logs/gc.log \
+-XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps \
+-XX:NewRatio=2 -XX:SurvivorRatio=8 \
+-XX:+UseParallelGC -XX:+UseParallelOldGC \
+-XX:+PrintHeapAtGC -XX:+PrintTenuringDistribution -XX:+PrintReferenceGC \
+-XX:+DisableExplicitGC"
+
+EXPOSE 18890
+EXPOSE 18861
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar hydrology-admin.jar --spring.config.location=file:resources/application.yml"]

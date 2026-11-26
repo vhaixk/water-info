@@ -1,0 +1,59 @@
+/* 门户面板共享样式（全局引入一次，见 main.js）
+ * 主题变量定义已统一至 assets/styles/tem-tokens.scss */
+
+.tem-cyan-vars {
+  color: var(--tem-text);
+}
+
+.tem-panel {
+  background: var(--tem-panel-bg);
+  border: 1px solid var(--tem-border);
+  box-shadow: var(--tem-panel-shadow);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tem-panel-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 10px 0 14px;
+  flex-shrink: 0;
+  position: relative;
+  background: var(--tem-hd-bg);
+  border-bottom: 1px solid var(--tem-hd-border);
+}
+
+.tem-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: var(--tem-title-tracking);
+  color: var(--tem-title-color);
+  text-shadow: var(--tem-title-shadow);
+  white-space: nowrap;
+}
+
+.tem-panel-title::before {
+  content: "";
+  width: 3px;
+  height: 16px;
+  background: var(--tem-cyan);
+  box-shadow: var(--tem-title-bar-shadow);
+}
+
+.tem-theme-tech.tem-shell {
+  background: linear-gradient(180deg, rgba(var(--tem-rgb-surface-top), 0.96), rgba(var(--tem-rgb-surface), 0.98));
+  box-shadow: 0 8px 22px rgba(var(--tem-shadow-rgb), 0.28);
+  border: 1px solid var(--tem-border);
+}

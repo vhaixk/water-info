@@ -1,0 +1,16 @@
+# AI 生成产物统一归档目录（日志/截图/导出等），不进入版本控制
+archive/
+
+# 依赖与构建产物
+node_modules/
+target/
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 日志与临时文件
+*.log
+.DS_Store

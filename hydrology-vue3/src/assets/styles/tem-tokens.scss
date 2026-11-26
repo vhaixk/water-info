@@ -1,0 +1,256 @@
+/**
+ * TEM 双主题统一色板（唯一配色来源）
+ * light = 浅色风格（tem-app-light / tem-theme-light）
+ * tech  = 深蓝科技风格（tem-app-tech / tem-theme-tech）
+ *
+ * 约定：
+ * - --tem-rgb-* 为 RGB 三元组，配合 rgba(var(--tem-rgb-x), a) 派生透明度变体；
+ * - 语义 token 供 content-theme / home / home-popper 及各业务组件复用；
+ * - 调整配色只需修改本文件。
+ */
+
+html.tem-app-light,
+.tem-theme-light {
+  /* ===== 基础色 ===== */
+  --tem-primary: #409eff;
+  --tem-primary-rgb: 64, 158, 255;
+  --tem-primary-light-3: #79bbff;
+  --tem-primary-dark-2: #337ecc;
+  --tem-on-primary: #ffffff;
+
+  --tem-text: #303133;
+  --tem-text-soft: #606266;
+  --tem-muted: #606266;
+  --tem-green: #67c23a;
+  --tem-success: #67c23a;
+  --tem-warning: #e6a23c;
+  --tem-danger: #f56c6c;
+
+  /* ===== 表面色 ===== */
+  --tem-app-bg: #ffffff;
+  --tem-panel: #ffffff;
+  --tem-page-bg: #f5f7fa;
+  --tem-panel-bg: #ffffff;
+  --tem-panel-shadow: 0 1px 6px rgba(27, 42, 58, 0.06);
+  --tem-hd-bg: #ecf5ff;
+  --tem-hd-border: rgba(64, 158, 255, 0.12);
+  --tem-card-bg: #f5f7fa;
+  --tem-card-border: rgba(64, 158, 255, 0.28);
+  --tem-warn-card-bg: #ffffff;
+  --tem-card-shadow: none;
+  --tem-value-shadow: none;
+  --tem-divider: rgba(64, 158, 255, 0.16);
+  --tem-item-border: rgba(64, 158, 255, 0.1);
+  --tem-shadow-rgb: 27, 42, 58;
+
+  /* ===== 弹窗 / 浮层 ===== */
+  --tem-dialog-bg: #ffffff;
+  --tem-dialog-border: rgba(64, 158, 255, 0.28);
+  --tem-dialog-shadow: 0 8px 24px rgba(27, 42, 58, 0.12);
+  --tem-dialog-hd-bg: #ecf5ff;
+  --tem-dialog-hd-border: rgba(64, 158, 255, 0.16);
+  --tem-popper-bg: #ffffff;
+  --tem-popper-border: rgba(64, 158, 255, 0.28);
+  --tem-popper-shadow: 0 8px 24px rgba(27, 42, 58, 0.12);
+  --tem-arrow-bg: #ffffff;
+
+  /* ===== 表格 ===== */
+  --tem-table-bg: #ffffff;
+  --tem-table-hd-bg: #f8f8f9;
+  --tem-table-hd-text: #515a6e;
+  --tem-table-text: #606266;
+  --tem-table-border: #ebeef5;
+  --tem-table-hover: #f5f7fa;
+  --tem-table-current: #ecf5ff;
+  --tem-table-current-hover: #ecf5ff;
+  --tem-table-stripe: #fafafa;
+
+  /* ===== 输入 ===== */
+  --tem-input-bg: #ffffff;
+  --tem-input-shadow: 0 0 0 1px rgba(64, 158, 255, 0.35) inset;
+  --tem-input-color: #303133;
+  --tem-icon-color: #606266;
+  --tem-border: rgba(64, 158, 255, 0.28);
+  --tem-cyan: #409eff;
+  --tem-cyan-soft: rgba(64, 158, 255, 0.12);
+
+  /* ===== 状态色 ===== */
+  --tem-alarm: #ff6b6b;
+  --tem-alarm-glow: none;
+  --tem-dot-glow: none;
+  --tem-offline: #f0b429;
+  --tem-offline-bg: rgba(240, 180, 41, 0.12);
+  --tem-offline-border: rgba(240, 180, 41, 0.3);
+  --tem-online-bg: rgba(46, 204, 113, 0.12);
+  --tem-online-border: rgba(46, 204, 113, 0.3);
+  --tem-station-color: #3d73e0;
+  --tem-station-bg: rgba(61, 115, 224, 0.1);
+  --tem-station-border: rgba(61, 115, 224, 0.3);
+  --tem-avg-bg: rgba(64, 158, 255, 0.1);
+  --tem-avg-border: rgba(64, 158, 255, 0.28);
+
+  /* ===== 标题 / 装饰 ===== */
+  --tem-title-color: #303133;
+  --tem-title-shadow: none;
+  --tem-title-bar-shadow: none;
+  --tem-title-tracking: 0px;
+  --tem-step-shadow: none;
+  --tem-arrow-filter: none;
+  --tem-warn-extra-color: #409eff;
+  --tem-warn-extra-shadow: none;
+  --tem-status-shadow: none;
+  --tem-meta-glow: none;
+}
+
+/* ===== 科技风：Element Plus 语义色阶映射 =====
+ * 挂在 html 层，使 app-main / 弹窗 / 传送到 body 的浮层（ElMessage 等）
+ * 都能读到暗色变体，修复 el-tag / el-alert / plain 按钮 / ElMessage
+ * 在深色背景下仍用浅色粉底的问题。亮色主题保持 EP 默认，不做映射。 */
+html.tem-app-tech {
+  --el-color-success: #67e0a3;
+  --el-color-success-light-3: #8fe8bb;
+  --el-color-success-light-5: rgba(103, 224, 163, 0.5);
+  --el-color-success-light-7: rgba(103, 224, 163, 0.3);
+  --el-color-success-light-8: rgba(103, 224, 163, 0.2);
+  --el-color-success-light-9: rgba(103, 224, 163, 0.12);
+  --el-color-success-dark-2: #52b382;
+
+  --el-color-warning: #f7ba2a;
+  --el-color-warning-light-3: #f9ce64;
+  --el-color-warning-light-5: rgba(247, 186, 42, 0.5);
+  --el-color-warning-light-7: rgba(247, 186, 42, 0.3);
+  --el-color-warning-light-8: rgba(247, 186, 42, 0.2);
+  --el-color-warning-light-9: rgba(247, 186, 42, 0.12);
+  --el-color-warning-dark-2: #c69522;
+
+  --el-color-danger: #ff6b81;
+  --el-color-danger-light-3: #ff92a3;
+  --el-color-danger-light-5: rgba(255, 107, 129, 0.5);
+  --el-color-danger-light-7: rgba(255, 107, 129, 0.3);
+  --el-color-danger-light-8: rgba(255, 107, 129, 0.2);
+  --el-color-danger-light-9: rgba(255, 107, 129, 0.12);
+  --el-color-danger-dark-2: #cc5667;
+
+  --el-color-error: #ff6b81;
+  --el-color-error-light-3: #ff92a3;
+  --el-color-error-light-5: rgba(255, 107, 129, 0.5);
+  --el-color-error-light-7: rgba(255, 107, 129, 0.3);
+  --el-color-error-light-8: rgba(255, 107, 129, 0.2);
+  --el-color-error-light-9: rgba(255, 107, 129, 0.12);
+  --el-color-error-dark-2: #cc5667;
+
+  --el-color-info: #909399;
+  --el-color-info-light-3: #a6a9ad;
+  --el-color-info-light-5: rgba(144, 147, 153, 0.5);
+  --el-color-info-light-7: rgba(144, 147, 153, 0.3);
+  --el-color-info-light-8: rgba(144, 147, 153, 0.2);
+  --el-color-info-light-9: rgba(144, 147, 153, 0.14);
+  --el-color-info-dark-2: #73767a;
+}
+html.tem-app-tech,
+.tem-theme-tech {
+  /* ===== 基础色 ===== */
+  --tem-primary: #1ac8ff;
+  --tem-primary-rgb: 26, 200, 255;
+  --tem-primary-light-3: #5de1ff;
+  --tem-primary-dark-2: #0ea5d8;
+  --tem-on-primary: #062056;
+
+  --tem-text: #ffffff;
+  --tem-text-soft: #cfe8ff;
+  --tem-muted: #7aa7d6;
+  --tem-green: #2ee59b;
+  --tem-success: #67e0a3;
+  --tem-warning: #f7ba2a;
+  --tem-danger: #ff6b81;
+
+  /* ===== 表面色（RGB 三元组用于派生透明变体） ===== */
+  --tem-app-bg: #061a4a;
+  --tem-rgb-surface-top: 10, 50, 126;
+  --tem-rgb-surface: 7, 36, 100;
+  --tem-rgb-surface-3: 9, 44, 118;
+  --tem-rgb-input: 6, 32, 92;
+  --tem-rgb-card: 5, 26, 78;
+  --tem-rgb-hd: 16, 70, 160;
+  --tem-panel: rgba(9, 44, 118, 0.94);
+  --tem-page-bg: transparent;
+  --tem-panel-bg: linear-gradient(180deg, rgba(10, 50, 126, 0.94), rgba(7, 36, 100, 0.96));
+  --tem-panel-shadow: 0 4px 16px rgba(4, 18, 60, 0.32);
+  --tem-hd-bg: rgba(16, 70, 160, 0.28);
+  --tem-hd-border: rgba(26, 200, 255, 0.18);
+  --tem-card-bg: rgba(5, 26, 78, 0.58);
+  --tem-card-border: rgba(26, 200, 255, 0.2);
+  --tem-warn-card-bg: rgba(5, 26, 78, 0.58);
+  --tem-card-shadow: none;
+  --tem-value-shadow: none;
+  --tem-divider: rgba(26, 200, 255, 0.16);
+  --tem-item-border: rgba(26, 200, 255, 0.12);
+  --tem-shadow-rgb: 4, 16, 56;
+
+  /* ===== 弹窗 / 浮层 ===== */
+  --tem-dialog-bg: linear-gradient(180deg, rgba(10, 50, 126, 0.98), rgba(7, 36, 100, 0.99));
+  --tem-dialog-border: rgba(26, 200, 255, 0.35);
+  --tem-dialog-shadow: 0 10px 28px rgba(4, 16, 56, 0.45);
+  --tem-dialog-hd-bg: rgba(16, 70, 160, 0.42);
+  --tem-dialog-hd-border: rgba(26, 200, 255, 0.18);
+  --tem-popper-bg: linear-gradient(180deg, rgba(10, 50, 126, 0.97), rgba(7, 36, 100, 0.98));
+  --tem-popper-border: rgba(26, 200, 255, 0.35);
+  --tem-popper-shadow: 0 10px 22px rgba(4, 16, 56, 0.38);
+  --tem-arrow-bg: rgba(9, 44, 118, 0.97);
+
+  /* ===== 表格 ===== */
+  --tem-table-bg: #072464;
+  --tem-table-hd-bg: #0c3a8c;
+  --tem-table-hd-text: #cfe8ff;
+  --tem-table-text: #ffffff;
+  --tem-table-border: rgba(26, 200, 255, 0.18);
+  --tem-table-hover: #0a3d70;
+  --tem-table-current: #0c4a82;
+  --tem-table-current-hover: #0d548f;
+  --tem-table-stripe: #061e54;
+
+  /* ===== 输入 / 禁用 ===== */
+  --tem-input-bg: rgba(6, 32, 92, 0.72);
+  --tem-input-shadow: 0 0 0 1px rgba(26, 200, 255, 0.32) inset;
+  --tem-input-color: #ffffff;
+  --tem-icon-color: #1ac8ff;
+  --tem-border: rgba(26, 200, 255, 0.32);
+  --tem-cyan: #1ac8ff;
+  --tem-cyan-soft: rgba(26, 200, 255, 0.12);
+  --tem-disabled-bg: #122648;
+  --tem-disabled-text: #8aa4bf;
+  --tem-disabled-btn-bg: rgba(14, 32, 58, 0.95);
+  --tem-disabled-btn-text: #6e8aa8;
+  --tem-disabled-border: rgba(122, 167, 214, 0.16);
+  --tem-mask: rgba(3, 12, 40, 0.55);
+  --tem-loading-mask: rgba(7, 36, 100, 0.55);
+  --tem-scrollbar-track: rgba(5, 26, 78, 0.4);
+  --tem-scrollbar-thumb: rgba(26, 200, 255, 0.35);
+
+  /* ===== 状态色 ===== */
+  --tem-alarm: #ff6b6b;
+  --tem-alarm-glow: none;
+  --tem-dot-glow: none;
+  --tem-offline: #ffc14d;
+  --tem-offline-bg: rgba(255, 193, 77, 0.14);
+  --tem-offline-border: rgba(255, 193, 77, 0.32);
+  --tem-online-bg: rgba(46, 229, 155, 0.12);
+  --tem-online-border: rgba(46, 229, 155, 0.32);
+  --tem-station-color: #6ab8f0;
+  --tem-station-bg: rgba(26, 200, 255, 0.1);
+  --tem-station-border: rgba(26, 200, 255, 0.28);
+  --tem-avg-bg: rgba(26, 200, 255, 0.1);
+  --tem-avg-border: rgba(26, 200, 255, 0.28);
+
+  /* ===== 标题 / 装饰 ===== */
+  --tem-title-color: #ffffff;
+  --tem-title-shadow: none;
+  --tem-title-bar-shadow: none;
+  --tem-title-tracking: 0px;
+  --tem-step-shadow: none;
+  --tem-arrow-filter: none;
+  --tem-warn-extra-color: #1ac8ff;
+  --tem-warn-extra-shadow: none;
+  --tem-status-shadow: none;
+  --tem-meta-glow: none;
+}

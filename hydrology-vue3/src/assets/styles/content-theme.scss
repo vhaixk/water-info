@@ -1,0 +1,982 @@
+/* Content theme: do not override navbar / sidebar / tags-view */
+/* 配色统一来源：tem-tokens.scss（--tem-*），此处只做 Element Plus 变量映射与结构覆盖 */
+
+html.tem-app-light .app-main {
+  background: var(--tem-app-bg);
+  color: var(--tem-text);
+}
+
+html.tem-app-light .el-dialog {
+  background: var(--tem-dialog-bg) !important;
+  border: 1px solid var(--tem-dialog-border) !important;
+  box-shadow: var(--tem-dialog-shadow) !important;
+}
+
+html.tem-app-light .el-dialog .el-dialog__header {
+  background: var(--tem-dialog-hd-bg) !important;
+  height: 48px;
+  border-bottom: 1px solid var(--tem-dialog-hd-border) !important;
+}
+
+html.tem-app-light .el-dialog .el-dialog__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tem-text) !important;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 48px;
+  padding-left: 16px;
+}
+
+html.tem-app-light .el-dialog .el-dialog__title::before {
+  content: "";
+  width: 3px;
+  height: 16px;
+  background: var(--tem-primary);
+}
+
+html.tem-app-light .el-dialog .el-dialog__headerbtn {
+  height: 48px !important;
+  width: 48px !important;
+}
+
+html.tem-app-light .el-dialog .el-dialog__close {
+  color: var(--tem-text-soft) !important;
+}
+
+html.tem-app-light .el-dialog .el-dialog__close:hover {
+  color: var(--tem-primary) !important;
+}
+
+html.tem-app-light .el-dialog .el-dialog__body {
+  background: var(--tem-dialog-bg);
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .app-main {
+  --el-color-primary: var(--tem-primary);
+  --el-color-primary-light-3: var(--tem-primary-light-3);
+  --el-color-primary-light-5: rgba(var(--tem-primary-rgb), 0.55);
+  --el-color-primary-light-7: rgba(var(--tem-primary-rgb), 0.32);
+  --el-color-primary-light-8: rgba(var(--tem-primary-rgb), 0.2);
+  --el-color-primary-light-9: rgba(var(--tem-primary-rgb), 0.12);
+  --el-color-primary-dark-2: var(--tem-primary-dark-2);
+  --el-bg-color: rgba(var(--tem-rgb-surface), 0.55);
+  --el-bg-color-page: transparent;
+  --el-bg-color-overlay: rgba(var(--tem-rgb-surface), 0.98);
+  --el-fill-color: rgba(var(--tem-rgb-card), 0.58);
+  --el-fill-color-light: rgba(var(--tem-rgb-card), 0.45);
+  --el-fill-color-lighter: rgba(var(--tem-rgb-card), 0.35);
+  --el-fill-color-extra-light: rgba(var(--tem-rgb-card), 0.22);
+  --el-fill-color-blank: rgba(var(--tem-rgb-input), 0.72);
+  --el-text-color-primary: var(--tem-text);
+  --el-text-color-regular: var(--tem-text-soft);
+  --el-text-color-secondary: var(--tem-muted);
+  --el-text-color-placeholder: var(--tem-muted);
+  --el-border-color: rgba(var(--tem-primary-rgb), 0.28);
+  --el-border-color-light: rgba(var(--tem-primary-rgb), 0.18);
+  --el-border-color-lighter: rgba(var(--tem-primary-rgb), 0.12);
+  --el-border-color-extra-light: rgba(var(--tem-primary-rgb), 0.08);
+  --el-mask-color: var(--tem-mask);
+  --el-box-shadow: 0 8px 22px rgba(var(--tem-shadow-rgb), 0.28);
+  color: var(--tem-text-soft);
+  background: var(--tem-app-bg);
+}
+
+html.tem-app-tech .app-main .app-container,
+html.tem-app-tech .app-main .page,
+html.tem-app-tech .app-main .el-container,
+html.tem-app-tech .app-main .el-main,
+html.tem-app-tech .app-main .el-aside,
+html.tem-app-tech .app-main .el-footer {
+  background: transparent;
+  color: inherit;
+}
+
+html.tem-app-tech .app-main .el-card {
+  --el-card-bg-color: rgba(var(--tem-rgb-surface-3), 0.55);
+  --el-card-border-color: rgba(var(--tem-primary-rgb), 0.28);
+  background: linear-gradient(180deg, rgba(var(--tem-rgb-surface-top), 0.88), rgba(var(--tem-rgb-surface), 0.92));
+  border-color: rgba(var(--tem-primary-rgb), 0.28);
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .app-main .el-card__header {
+  border-bottom-color: rgba(var(--tem-primary-rgb), 0.18);
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .app-main .el-form-item__label {
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .app-main .el-input__wrapper,
+html.tem-app-tech .app-main .el-select__wrapper,
+html.tem-app-tech .app-main .el-textarea__inner,
+html.tem-app-tech .app-main .el-date-editor .el-input__wrapper,
+html.tem-app-tech .app-main .el-input-number .el-input__wrapper {
+  background: var(--tem-input-bg) !important;
+  box-shadow: var(--tem-input-shadow) !important;
+}
+
+html.tem-app-tech .app-main .el-input__inner,
+html.tem-app-tech .app-main .el-textarea__inner,
+html.tem-app-tech .app-main .el-select__selected-item,
+html.tem-app-tech .app-main .el-select__caret,
+html.tem-app-tech .app-main .el-select__placeholder,
+html.tem-app-tech .app-main .el-range-separator,
+html.tem-app-tech .app-main .el-range-input {
+  color: var(--tem-input-color) !important;
+}
+
+html.tem-app-tech .app-main .el-select__placeholder.is-transparent,
+html.tem-app-tech .app-main .el-input__inner::placeholder,
+html.tem-app-tech .app-main .el-textarea__inner::placeholder {
+  color: var(--tem-muted) !important;
+}
+
+html.tem-app-tech .app-main .el-table,
+html.tem-app-tech .el-dialog .el-table {
+  --el-table-bg-color: var(--tem-table-bg);
+  --el-table-tr-bg-color: var(--tem-table-bg);
+  --el-table-header-bg-color: var(--tem-table-hd-bg);
+  --el-table-text-color: var(--tem-table-text);
+  --el-table-header-text-color: var(--tem-table-hd-text);
+  --el-table-border-color: var(--tem-table-border);
+  --el-table-row-hover-bg-color: var(--tem-table-hover);
+  --el-table-current-row-bg-color: var(--tem-table-current);
+  --el-fill-color-lighter: var(--tem-table-stripe);
+  background: var(--tem-table-bg);
+  color: var(--tem-table-text);
+}
+
+html.tem-app-tech .app-main .el-table th.el-table__cell,
+html.tem-app-tech .el-dialog .el-table th.el-table__cell {
+  background-color: var(--tem-table-hd-bg) !important;
+  color: var(--tem-table-hd-text);
+}
+
+html.tem-app-tech .app-main .el-table td.el-table__cell,
+html.tem-app-tech .el-dialog .el-table td.el-table__cell {
+  background-color: var(--tem-table-bg) !important;
+}
+
+html.tem-app-tech .app-main .el-table--striped .el-table__body tr.el-table__row--striped > td.el-table__cell,
+html.tem-app-tech .el-dialog .el-table--striped .el-table__body tr.el-table__row--striped > td.el-table__cell {
+  background-color: var(--tem-table-stripe) !important;
+}
+
+html.tem-app-tech .app-main .el-table .el-table__body tr:hover > td.el-table__cell,
+html.tem-app-tech .el-dialog .el-table .el-table__body tr:hover > td.el-table__cell {
+  background-color: var(--tem-table-hover) !important;
+}
+
+html.tem-app-tech .app-main .el-table .el-table__body tr.current-row > td.el-table__cell,
+html.tem-app-tech .el-dialog .el-table .el-table__body tr.current-row > td.el-table__cell {
+  background-color: var(--tem-table-current) !important;
+}
+
+html.tem-app-tech .app-main .el-table .el-table__body tr.current-row:hover > td.el-table__cell,
+html.tem-app-tech .el-dialog .el-table .el-table__body tr.current-row:hover > td.el-table__cell {
+  background-color: var(--tem-table-current-hover) !important;
+}
+
+html.tem-app-tech .app-main .el-table .el-table__fixed,
+html.tem-app-tech .app-main .el-table .el-table__fixed-right,
+html.tem-app-tech .el-dialog .el-table .el-table__fixed,
+html.tem-app-tech .el-dialog .el-table .el-table__fixed-right {
+  background-color: var(--tem-table-bg);
+}
+
+html.tem-app-tech .app-main .el-table .el-table__fixed-right-patch,
+html.tem-app-tech .el-dialog .el-table .el-table__fixed-right-patch {
+  background-color: var(--tem-table-hd-bg);
+}
+
+html.tem-app-tech .app-main .el-table th.el-table-fixed-column--left,
+html.tem-app-tech .app-main .el-table th.el-table-fixed-column--right,
+html.tem-app-tech .el-dialog .el-table th.el-table-fixed-column--left,
+html.tem-app-tech .el-dialog .el-table th.el-table-fixed-column--right {
+  background-color: var(--tem-table-hd-bg) !important;
+}
+
+html.tem-app-light .app-main .el-table,
+html.tem-app-light .el-dialog .el-table {
+  --el-table-bg-color: var(--tem-table-bg);
+  --el-table-tr-bg-color: var(--tem-table-bg);
+  --el-table-header-bg-color: var(--tem-table-hd-bg);
+  --el-table-text-color: var(--tem-table-text);
+  --el-table-header-text-color: var(--tem-table-hd-text);
+  --el-table-border-color: var(--tem-table-border);
+  --el-table-row-hover-bg-color: var(--tem-table-hover);
+  --el-table-current-row-bg-color: var(--tem-table-current);
+  --el-fill-color-lighter: var(--tem-table-stripe);
+  background: var(--tem-table-bg);
+  color: var(--tem-table-text);
+}
+
+html.tem-app-light .app-main .el-table th.el-table__cell,
+html.tem-app-light .el-dialog .el-table th.el-table__cell {
+  background-color: var(--tem-table-hd-bg) !important;
+  color: var(--tem-table-hd-text);
+}
+
+html.tem-app-light .app-main .el-table td.el-table__cell,
+html.tem-app-light .el-dialog .el-table td.el-table__cell {
+  background-color: var(--tem-table-bg) !important;
+}
+
+html.tem-app-light .app-main .el-table--striped .el-table__body tr.el-table__row--striped > td.el-table__cell,
+html.tem-app-light .el-dialog .el-table--striped .el-table__body tr.el-table__row--striped > td.el-table__cell {
+  background-color: var(--tem-table-stripe) !important;
+}
+
+html.tem-app-light .app-main .el-table .el-table__body tr:hover > td.el-table__cell,
+html.tem-app-light .el-dialog .el-table .el-table__body tr:hover > td.el-table__cell {
+  background-color: var(--tem-table-hover) !important;
+}
+
+html.tem-app-light .app-main .el-table .el-table__body tr.current-row > td.el-table__cell,
+html.tem-app-light .el-dialog .el-table .el-table__body tr.current-row > td.el-table__cell {
+  background-color: var(--tem-table-current) !important;
+}
+
+html.tem-app-light .app-main .el-table .el-table__fixed,
+html.tem-app-light .app-main .el-table .el-table__fixed-right,
+html.tem-app-light .el-dialog .el-table .el-table__fixed,
+html.tem-app-light .el-dialog .el-table .el-table__fixed-right {
+  background-color: var(--tem-table-bg);
+}
+
+html.tem-app-light .app-main .el-table th.el-table-fixed-column--left,
+html.tem-app-light .app-main .el-table th.el-table-fixed-column--right,
+html.tem-app-light .el-dialog .el-table th.el-table-fixed-column--left,
+html.tem-app-light .el-dialog .el-table th.el-table-fixed-column--right {
+  background-color: var(--tem-table-hd-bg) !important;
+}
+
+html.tem-app-tech .app-main .el-pagination,
+html.tem-app-tech .el-dialog .el-pagination {
+  --el-pagination-bg-color: transparent;
+  --el-pagination-text-color: var(--tem-text-soft);
+  --el-pagination-button-bg-color: rgba(var(--tem-rgb-input), 0.72);
+  --el-pagination-button-color: var(--tem-text-soft);
+  --el-pagination-hover-color: var(--tem-primary);
+  --el-disabled-bg-color: rgba(var(--tem-rgb-card), 0.7);
+  --el-disabled-text-color: var(--tem-muted);
+}
+
+html.tem-app-tech .app-main .el-pager li,
+html.tem-app-tech .el-dialog .el-pager li {
+  background: rgba(var(--tem-rgb-input), 0.72);
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .app-main .el-pager li.is-active,
+html.tem-app-tech .el-dialog .el-pager li.is-active {
+  background: rgba(var(--tem-primary-rgb), 0.22);
+  color: var(--tem-primary);
+}
+
+html.tem-app-tech .app-main .el-pagination button:disabled,
+html.tem-app-tech .app-main .el-pagination button.is-disabled,
+html.tem-app-tech .app-main .el-pagination .btn-prev:disabled,
+html.tem-app-tech .app-main .el-pagination .btn-next:disabled,
+html.tem-app-tech .app-main .el-pager li.is-disabled,
+html.tem-app-tech .el-dialog .el-pagination button:disabled,
+html.tem-app-tech .el-dialog .el-pagination button.is-disabled,
+html.tem-app-tech .el-dialog .el-pagination .btn-prev:disabled,
+html.tem-app-tech .el-dialog .el-pagination .btn-next:disabled,
+html.tem-app-tech .el-dialog .el-pager li.is-disabled {
+  background: rgba(var(--tem-rgb-input), 0.45) !important;
+  color: var(--tem-muted) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+html.tem-app-tech .app-main .el-pagination button:disabled:hover,
+html.tem-app-tech .app-main .el-pagination .btn-prev:disabled:hover,
+html.tem-app-tech .app-main .el-pagination .btn-next:disabled:hover,
+html.tem-app-tech .el-dialog .el-pagination button:disabled:hover,
+html.tem-app-tech .el-dialog .el-pagination .btn-prev:disabled:hover,
+html.tem-app-tech .el-dialog .el-pagination .btn-next:disabled:hover {
+  background: rgba(var(--tem-rgb-input), 0.45) !important;
+  color: var(--tem-muted) !important;
+}
+
+html.tem-app-tech .app-main .el-tree {
+  background: transparent;
+  color: var(--tem-text);
+  --el-tree-node-hover-bg-color: rgba(var(--tem-primary-rgb), 0.14);
+  --el-tree-text-color: var(--tem-text);
+}
+
+html.tem-app-tech .app-main .el-tabs__item {
+  color: var(--tem-muted);
+}
+
+html.tem-app-tech .app-main .el-tabs__item.is-active,
+html.tem-app-tech .app-main .el-tabs__item:hover {
+  color: var(--tem-primary);
+}
+
+html.tem-app-tech .app-main .el-tabs__nav-wrap::after {
+  background-color: rgba(var(--tem-primary-rgb), 0.16);
+}
+
+html.tem-app-tech .app-main .el-divider {
+  border-color: rgba(var(--tem-primary-rgb), 0.18);
+}
+
+html.tem-app-tech .app-main .el-descriptions {
+  --el-descriptions-item-bordered-label-background: rgba(var(--tem-rgb-hd), 0.45);
+}
+
+html.tem-app-tech .app-main .el-empty__description,
+html.tem-app-tech .app-main .copyright {
+  color: var(--tem-muted);
+}
+
+html.tem-app-tech .app-main .el-loading-mask {
+  background-color: var(--tem-loading-mask);
+}
+
+html.tem-app-tech .app-main .splitpanes.default-theme .splitpanes__pane {
+  background: transparent;
+}
+
+html.tem-app-tech .app-main ::-webkit-scrollbar-track {
+  background-color: var(--tem-scrollbar-track);
+}
+
+html.tem-app-tech .app-main ::-webkit-scrollbar-thumb {
+  background-color: var(--tem-scrollbar-thumb);
+}
+
+html.tem-app-tech .el-overlay .el-dialog,
+html.tem-app-tech .el-dialog {
+  --el-color-primary: var(--tem-primary);
+  --el-text-color-primary: var(--tem-text);
+  --el-text-color-regular: var(--tem-text-soft);
+  --el-text-color-secondary: var(--tem-muted);
+  --el-bg-color: rgba(var(--tem-rgb-surface), 0.96);
+  --el-fill-color-blank: rgba(var(--tem-rgb-input), 0.72);
+  --el-border-color: rgba(var(--tem-primary-rgb), 0.32);
+  background: var(--tem-dialog-bg) !important;
+  border: 1px solid var(--tem-dialog-border) !important;
+  box-shadow: var(--tem-dialog-shadow) !important;
+}
+
+html.tem-app-tech .el-dialog .el-dialog__header {
+  background: var(--tem-dialog-hd-bg) !important;
+  height: 48px;
+  border-bottom: 1px solid var(--tem-dialog-hd-border) !important;
+}
+
+html.tem-app-tech .el-dialog .el-dialog__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tem-text) !important;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 48px;
+  padding-left: 16px;
+}
+
+html.tem-app-tech .el-dialog .el-dialog__title::before {
+  content: "";
+  width: 3px;
+  height: 16px;
+  background: var(--tem-primary);
+}
+
+html.tem-app-tech .el-dialog .el-dialog__headerbtn {
+  height: 48px !important;
+  width: 48px !important;
+}
+
+html.tem-app-tech .el-dialog .el-dialog__close {
+  color: var(--tem-primary) !important;
+}
+
+html.tem-app-tech .el-dialog .el-dialog__close:hover {
+  color: var(--tem-text) !important;
+}
+
+html.tem-app-tech .el-dialog .el-dialog__body,
+html.tem-app-tech .el-dialog .el-dialog__footer {
+  background: transparent;
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-dialog .el-form-item__label,
+html.tem-app-tech .el-dialog .el-text {
+  color: var(--tem-text-soft) !important;
+}
+
+html.tem-app-tech .el-dialog .el-text.el-text--primary {
+  color: var(--tem-primary) !important;
+}
+
+html.tem-app-tech .el-dialog .el-text.el-text--success {
+  color: var(--tem-success) !important;
+}
+
+html.tem-app-tech .el-dialog .el-text.el-text--warning {
+  color: var(--tem-warning) !important;
+}
+
+html.tem-app-tech .el-dialog .el-text.el-text--danger {
+  color: var(--tem-danger) !important;
+}
+
+html.tem-app-tech .el-dialog .el-text.el-text--info {
+  color: var(--tem-text-soft) !important;
+}
+
+html.tem-app-tech .el-dialog .el-upload-dragger {
+  background: rgba(var(--tem-rgb-input), 0.45) !important;
+  border: 1px dashed var(--tem-dialog-border) !important;
+}
+
+html.tem-app-tech .el-dialog .el-upload-dragger:hover {
+  border-color: var(--tem-primary) !important;
+}
+
+html.tem-app-tech .el-dialog .el-icon--upload,
+html.tem-app-tech .el-dialog .el-upload__text {
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .el-dialog .el-upload__text em {
+  color: var(--tem-primary);
+}
+
+html.tem-app-tech .el-dialog .el-upload-list__item-name {
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .el-dialog .el-input__wrapper,
+html.tem-app-tech .el-dialog .el-select__wrapper,
+html.tem-app-tech .el-dialog .el-textarea__inner,
+html.tem-app-tech .el-dialog .el-date-editor .el-input__wrapper {
+  background: var(--tem-input-bg) !important;
+  box-shadow: var(--tem-input-shadow) !important;
+}
+
+html.tem-app-tech .el-dialog .el-input__inner,
+html.tem-app-tech .el-dialog .el-select__selected-item,
+html.tem-app-tech .el-dialog .el-select__caret,
+html.tem-app-tech .el-dialog .el-textarea__inner {
+  color: var(--tem-input-color) !important;
+}
+
+
+html.tem-app-tech .el-select-dropdown,
+html.tem-app-tech .el-picker__popper,
+html.tem-app-tech .el-cascader__dropdown,
+html.tem-app-tech .el-popper.is-light.el-select__popper,
+html.tem-app-tech .el-popper.is-light.el-picker__popper {
+  background: var(--tem-popper-bg) !important;
+  border: 1px solid var(--tem-popper-border) !important;
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-select-dropdown__item {
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-select-dropdown__item.is-hovering,
+html.tem-app-tech .el-select-dropdown__item:hover {
+  background: rgba(var(--tem-primary-rgb), 0.14);
+}
+
+html.tem-app-tech .el-select-dropdown__item.is-selected {
+  color: var(--tem-primary);
+  background: rgba(var(--tem-primary-rgb), 0.18);
+}
+
+html.tem-app-tech .el-picker__popper,
+html.tem-app-tech .el-popper.is-light.el-picker__popper {
+  --el-bg-color-overlay: rgba(var(--tem-rgb-surface), 0.98);
+  --el-fill-color-blank: rgba(var(--tem-rgb-input), 0.72);
+  --el-text-color-primary: var(--tem-text);
+  --el-text-color-regular: var(--tem-text-soft);
+  --el-text-color-placeholder: var(--tem-muted);
+  --el-border-color: rgba(var(--tem-primary-rgb), 0.28);
+  --el-border-color-light: rgba(var(--tem-primary-rgb), 0.18);
+  --el-datepicker-text-color: var(--tem-text);
+  --el-datepicker-off-text-color: var(--tem-muted);
+  --el-datepicker-header-text-color: var(--tem-text);
+  --el-datepicker-inrange-bg-color: rgba(var(--tem-primary-rgb), 0.12);
+  --el-datepicker-inrange-hover-bg-color: rgba(var(--tem-primary-rgb), 0.18);
+}
+
+html.tem-app-tech .el-picker-panel,
+html.tem-app-tech .el-date-picker,
+html.tem-app-tech .el-picker-panel__body-wrapper,
+html.tem-app-tech .el-picker-panel__body,
+html.tem-app-tech .el-picker-panel__footer,
+html.tem-app-tech .el-date-picker__time-header,
+html.tem-app-tech .el-date-range-picker__time-header {
+  background: transparent !important;
+  color: var(--tem-text);
+  border-color: rgba(var(--tem-primary-rgb), 0.18) !important;
+}
+
+html.tem-app-tech .el-date-table th,
+html.tem-app-tech .el-date-picker__header-label,
+html.tem-app-tech .el-picker-panel__icon-btn {
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-date-table td.in-range .el-date-table-cell,
+html.tem-app-tech .el-date-table td.in-range:hover .el-date-table-cell,
+html.tem-app-tech .el-month-table td.in-range .el-date-table-cell,
+html.tem-app-tech .el-month-table td.in-range:hover .el-date-table-cell,
+html.tem-app-tech .el-year-table td.in-range .el-date-table-cell,
+html.tem-app-tech .el-year-table td.in-range:hover .el-date-table-cell {
+  background-color: rgba(var(--tem-primary-rgb), 0.16) !important;
+}
+
+html.tem-app-tech .el-date-table td.available:hover .el-date-table-cell__text,
+html.tem-app-tech .el-date-table td.today .el-date-table-cell__text {
+  color: var(--tem-primary);
+}
+
+html.tem-app-tech .el-date-table td.current:not(.disabled) .el-date-table-cell__text,
+html.tem-app-tech .el-date-table td.start-date .el-date-table-cell__text,
+html.tem-app-tech .el-date-table td.end-date .el-date-table-cell__text {
+  background: var(--tem-primary) !important;
+  color: var(--tem-on-primary) !important;
+}
+
+html.tem-app-tech .el-date-table td.start-date .el-date-table-cell,
+html.tem-app-tech .el-date-table td.end-date .el-date-table-cell {
+  background-color: rgba(var(--tem-primary-rgb), 0.16) !important;
+}
+
+html.tem-app-tech .el-picker__popper .el-input__wrapper,
+html.tem-app-tech .el-date-picker__editor-wrap .el-input__wrapper,
+html.tem-app-tech .el-date-range-picker__editors-wrap .el-input__wrapper,
+html.tem-app-tech .el-time-panel .el-input__wrapper {
+  background: var(--tem-input-bg) !important;
+  box-shadow: var(--tem-input-shadow) !important;
+}
+
+html.tem-app-tech .el-picker__popper .el-input__inner,
+html.tem-app-tech .el-date-picker__editor-wrap .el-input__inner,
+html.tem-app-tech .el-date-range-picker__editors-wrap .el-input__inner,
+html.tem-app-tech .el-time-panel .el-input__inner {
+  color: var(--tem-input-color) !important;
+}
+
+html.tem-app-tech .el-time-panel,
+html.tem-app-tech .el-picker-panel.el-time-panel,
+html.tem-app-tech .el-popper .el-time-panel {
+  background: var(--tem-dialog-bg) !important;
+  border: 1px solid var(--tem-dialog-border) !important;
+  color: var(--tem-text);
+  box-shadow: 0 8px 22px rgba(var(--tem-shadow-rgb), 0.38);
+}
+
+html.tem-app-tech .el-popper.is-light:has(.el-time-panel) {
+  background: var(--tem-dialog-bg) !important;
+  border: 1px solid var(--tem-dialog-border) !important;
+}
+
+html.tem-app-tech .el-popper.is-light:has(.el-time-panel) .el-popper__arrow::before {
+  background: var(--tem-arrow-bg) !important;
+  border: 1px solid var(--tem-dialog-border) !important;
+}
+
+html.tem-app-tech .el-time-panel__content,
+html.tem-app-tech .el-time-spinner,
+html.tem-app-tech .el-time-spinner__wrapper {
+  background: transparent !important;
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-time-spinner__item {
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .el-time-spinner__item:hover:not(.is-disabled):not(.is-active) {
+  background: rgba(var(--tem-primary-rgb), 0.14);
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-time-spinner__item.is-active:not(.is-disabled) {
+  color: var(--tem-primary);
+  font-weight: 600;
+}
+
+html.tem-app-tech .el-time-panel__content::after,
+html.tem-app-tech .el-time-panel__content::before {
+  border-color: rgba(var(--tem-primary-rgb), 0.18);
+}
+
+html.tem-app-tech .el-time-panel__footer {
+  background: transparent !important;
+  border-top: 1px solid rgba(var(--tem-primary-rgb), 0.18) !important;
+}
+
+html.tem-app-tech .el-time-panel__btn {
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .el-time-panel__btn.confirm {
+  color: var(--tem-primary);
+}
+
+html.tem-app-tech .el-time-panel__btn:hover {
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-picker-panel .el-button {
+  --el-button-bg-color: rgba(var(--tem-primary-rgb), 0.14);
+  --el-button-text-color: var(--tem-primary);
+  --el-button-border-color: rgba(var(--tem-primary-rgb), 0.35);
+  --el-button-hover-bg-color: rgba(var(--tem-primary-rgb), 0.24);
+  --el-button-hover-text-color: var(--tem-text);
+  --el-button-hover-border-color: var(--tem-primary);
+}
+
+/* 实心按钮：科技风主色/语义色偏亮，白字对比度不足，改用深色字 */
+html.tem-app-tech .el-button--primary:not(.is-plain):not(.is-text):not(.is-link),
+html.tem-app-tech .el-button--success:not(.is-plain):not(.is-text):not(.is-link),
+html.tem-app-tech .el-button--warning:not(.is-plain):not(.is-text):not(.is-link),
+html.tem-app-tech .el-button--danger:not(.is-plain):not(.is-text):not(.is-link),
+html.tem-app-tech .el-button--error:not(.is-plain):not(.is-text):not(.is-link) {
+  --el-button-text-color: var(--tem-on-primary);
+  --el-button-hover-text-color: var(--tem-on-primary);
+  --el-button-active-text-color: var(--tem-on-primary);
+}
+
+/* 单选按钮选中态：亮青底 + 深色字 */
+html.tem-app-tech .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  color: var(--tem-on-primary);
+}
+
+html.tem-app-tech .el-message-box {
+  background: var(--tem-dialog-bg);
+  border: 1px solid var(--tem-dialog-border);
+}
+
+html.tem-app-tech .el-message-box__title,
+html.tem-app-tech .el-message-box__content {
+  color: var(--tem-text);
+}
+
+/* MessageBox prompt 输入框 */
+html.tem-app-tech .el-message-box .el-input__wrapper {
+  background: var(--tem-input-bg);
+  box-shadow: var(--tem-input-shadow);
+}
+
+html.tem-app-tech .el-message-box .el-input__inner {
+  color: var(--tem-input-color);
+}
+
+html.tem-app-tech .el-message-box .el-input__inner::placeholder {
+  color: var(--tem-muted);
+}
+
+/* 通知（传送到 body，读不到 .app-main 变量，需单独覆盖） */
+html.tem-app-tech .el-notification {
+  background: var(--tem-dialog-bg);
+  border: 1px solid var(--tem-dialog-border);
+  box-shadow: var(--tem-dialog-shadow);
+}
+
+html.tem-app-tech .el-notification .el-notification__title {
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-notification .el-notification__content {
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .el-notification .el-notification__closeBtn {
+  color: var(--tem-muted);
+}
+
+html.tem-app-tech .el-notification .el-notification__closeBtn:hover {
+  color: var(--tem-primary);
+}
+
+/* 树选择下拉（系统用户/菜单/部门/代码生成）：popper 背景已覆盖，内部树仍需适配 */
+html.tem-app-tech .el-select__popper .el-tree,
+html.tem-app-tech .el-tree-select__popper .el-tree {
+  background: transparent;
+  color: var(--tem-text);
+  --el-tree-node-hover-bg-color: rgba(var(--tem-primary-rgb), 0.14);
+  --el-tree-text-color: var(--tem-text);
+  --el-tree-expand-icon-color: var(--tem-muted);
+}
+
+html.tem-app-tech .el-select__popper .el-tree-node.is-current > .el-tree-node__content,
+html.tem-app-tech .el-tree-select__popper .el-tree-node.is-current > .el-tree-node__content {
+  background: rgba(var(--tem-primary-rgb), 0.18);
+  color: var(--tem-primary);
+}
+
+html.tem-app-tech .el-select__popper .el-tree-node__content,
+html.tem-app-tech .el-tree-select__popper .el-tree-node__content {
+  color: var(--tem-text);
+}
+
+/* 取色器面板（设置抽屉 / 表单构建） */
+html.tem-app-tech .el-color-picker__panel {
+  --el-color-primary: var(--tem-primary);
+  --el-bg-color-overlay: rgba(var(--tem-rgb-surface), 0.98);
+  --el-text-color-regular: var(--tem-text-soft);
+  --el-text-color-primary: var(--tem-text);
+  --el-border-color: rgba(var(--tem-primary-rgb), 0.28);
+  --el-border-color-light: rgba(var(--tem-primary-rgb), 0.18);
+  --el-fill-color-blank: rgba(var(--tem-rgb-input), 0.72);
+  background: var(--tem-popper-bg);
+  border: 1px solid var(--tem-popper-border);
+  box-shadow: var(--tem-popper-shadow);
+}
+
+html.tem-app-tech .el-color-picker__panel .el-input__wrapper {
+  background: var(--tem-input-bg);
+  box-shadow: var(--tem-input-shadow);
+}
+
+html.tem-app-tech .el-color-picker__panel .el-input__inner {
+  color: var(--tem-input-color);
+}
+
+html.tem-app-tech .el-color-dropdown__link-btn {
+  color: var(--tem-primary);
+}
+
+html.tem-app-tech .el-color-dropdown__link-btn:hover {
+  color: var(--tem-primary-light-3);
+}
+
+html.tem-app-tech .el-drawer {
+  --el-text-color-primary: var(--tem-text);
+  --el-text-color-regular: var(--tem-text-soft);
+  --el-text-color-secondary: var(--tem-text-soft);
+  --el-text-color-placeholder: var(--tem-muted);
+  --el-border-color: rgba(var(--tem-primary-rgb), 0.28);
+  --el-border-color-light: rgba(var(--tem-primary-rgb), 0.18);
+  background: var(--tem-dialog-bg);
+  color: var(--tem-text);
+}
+
+html.tem-app-tech .el-drawer .drawer-title,
+html.tem-app-tech .el-drawer .setting-drawer-title,
+html.tem-app-tech .el-drawer .setting-drawer-title .drawer-title {
+  color: var(--tem-text) !important;
+}
+
+html.tem-app-tech .el-drawer .drawer-item,
+html.tem-app-tech .el-drawer .drawer-item span {
+  color: var(--tem-text-soft) !important;
+}
+
+html.tem-app-tech .el-drawer .el-divider {
+  border-top-color: rgba(var(--tem-primary-rgb), 0.18);
+}
+
+html.tem-app-tech .el-drawer__header {
+  color: var(--tem-text);
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(var(--tem-primary-rgb), 0.18);
+}
+
+html.tem-app-tech .el-overlay-dialog {
+  --el-color-primary: var(--tem-primary);
+}
+
+/* Keep table / fixed columns from covering toolbars (both themes) */
+.app-main .app-container {
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+.app-main .mb8 {
+  position: relative;
+  z-index: 5;
+}
+
+.app-main .app-container > .page,
+.app-main .app-container > .el-container,
+.app-main .app-container > .el-tabs {
+  height: 100%;
+  min-height: 0;
+}
+
+.app-main .app-container > .el-tabs > .el-tabs__content {
+  overflow: hidden;
+}
+
+.app-main .app-container > .el-tabs.el-tabs--left > .el-tabs__content {
+  height: 100%;
+}
+
+.app-main .app-container > .el-tabs.el-tabs--top > .el-tabs__content {
+  height: calc(100% - 40px);
+}
+
+.app-main .app-container .el-tab-pane {
+  height: 100%;
+}
+
+.app-main .app-container .el-tab-pane > .page,
+.app-main .app-container .el-tab-pane > .app-container,
+.app-main .app-container .el-tab-pane > div {
+  height: 100%;
+  min-height: 0;
+}
+
+.app-main .page {
+  height: 100% !important;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.app-main .app-container .el-header {
+  height: auto !important;
+  min-height: 60px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+  overflow: visible;
+}
+
+.app-main .app-container .el-header .el-form--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.app-main .app-container .el-header .el-form--inline .el-form-item {
+  margin-bottom: 8px;
+}
+
+.app-main .app-container .el-header .el-form--inline > div[style*="float"] {
+  margin-left: auto;
+}
+
+.app-main .app-container .el-container.is-vertical {
+  overflow: hidden;
+}
+
+.app-main .app-container .el-container.is-vertical > .el-main {
+  height: auto !important;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.app-main .app-container .el-main {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+}
+
+.app-main .table-container {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-main .app-container .el-table {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.app-main .app-container .el-table .el-table__fixed,
+.app-main .app-container .el-table .el-table__fixed-right,
+.app-main .app-container .el-table .el-table-fixed-column--left,
+.app-main .app-container .el-table .el-table-fixed-column--right {
+  z-index: 2;
+}
+
+html.tem-app-light .app-main .app-container .el-header {
+  background: var(--tem-app-bg);
+}
+
+html.tem-app-tech .app-main .app-container .el-header {
+  background: var(--tem-app-bg);
+  color: inherit;
+}
+
+.el-dialog .el-header {
+  height: auto !important;
+  min-height: 60px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+}
+
+.el-dialog .el-table {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+html.tem-app-tech .app-main .el-input.is-disabled .el-input__wrapper,
+html.tem-app-tech .app-main .el-textarea.is-disabled .el-textarea__inner,
+html.tem-app-tech .app-main .el-select .el-select__wrapper.is-disabled,
+html.tem-app-tech .app-main .el-input-number.is-disabled .el-input__wrapper,
+html.tem-app-tech .app-main .el-date-editor.is-disabled .el-input__wrapper,
+html.tem-app-tech .app-main .el-range-editor.is-disabled,
+html.tem-app-tech .el-dialog .el-input.is-disabled .el-input__wrapper,
+html.tem-app-tech .el-dialog .el-textarea.is-disabled .el-textarea__inner,
+html.tem-app-tech .el-dialog .el-select .el-select__wrapper.is-disabled,
+html.tem-app-tech .el-dialog .el-input-number.is-disabled .el-input__wrapper,
+html.tem-app-tech .el-dialog .el-date-editor.is-disabled .el-input__wrapper,
+html.tem-app-tech .app-main .el-range-editor.is-disabled input,
+html.tem-app-tech .el-dialog .el-range-editor.is-disabled {
+  background: var(--tem-disabled-bg) !important;
+  box-shadow: 0 0 0 1px var(--tem-disabled-border) inset !important;
+  cursor: not-allowed;
+}
+
+html.tem-app-tech .app-main .el-input.is-disabled .el-input__inner,
+html.tem-app-tech .app-main .el-textarea.is-disabled .el-textarea__inner,
+html.tem-app-tech .app-main .el-select.is-disabled .el-select__selected-item,
+html.tem-app-tech .app-main .el-select.is-disabled .el-select__placeholder,
+html.tem-app-tech .app-main .el-select.is-disabled .el-select__caret,
+html.tem-app-tech .app-main .el-input-number.is-disabled .el-input__inner,
+html.tem-app-tech .app-main .el-date-editor.is-disabled .el-input__inner,
+html.tem-app-tech .app-main .el-date-editor.is-disabled .el-input__prefix,
+html.tem-app-tech .app-main .el-date-editor.is-disabled .el-input__suffix,
+html.tem-app-tech .el-dialog .el-input.is-disabled .el-input__inner,
+html.tem-app-tech .el-dialog .el-textarea.is-disabled .el-textarea__inner,
+html.tem-app-tech .el-dialog .el-select.is-disabled .el-select__selected-item,
+html.tem-app-tech .el-dialog .el-select.is-disabled .el-select__placeholder,
+html.tem-app-tech .el-dialog .el-select.is-disabled .el-select__caret,
+html.tem-app-tech .el-dialog .el-input-number.is-disabled .el-input__inner,
+html.tem-app-tech .el-dialog .el-date-editor.is-disabled .el-input__inner,
+html.tem-app-tech .el-dialog .el-date-editor.is-disabled .el-input__prefix,
+html.tem-app-tech .el-dialog .el-date-editor.is-disabled .el-input__suffix,
+html.tem-app-tech .el-dialog .el-input.is-disabled .el-input__prefix,
+html.tem-app-tech .el-dialog .el-input.is-disabled .el-input__suffix {
+  color: var(--tem-disabled-text) !important;
+  -webkit-text-fill-color: var(--tem-disabled-text);
+}
+
+html.tem-app-tech .app-main .el-input-number.is-disabled .el-input-number__decrease,
+html.tem-app-tech .app-main .el-input-number.is-disabled .el-input-number__increase,
+html.tem-app-tech .el-dialog .el-input-number.is-disabled .el-input-number__decrease,
+html.tem-app-tech .el-dialog .el-input-number.is-disabled .el-input-number__increase {
+  background: var(--tem-disabled-btn-bg) !important;
+  color: var(--tem-disabled-btn-text) !important;
+  border-color: rgba(122, 167, 214, 0.14) !important;
+  cursor: not-allowed;
+}
