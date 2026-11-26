@@ -20,14 +20,8 @@ const contentStyle = {
 }
 
 
-export const exportTable = (elementId= 'export-table', excelName= "导出数据", headerRowCount= 1) => {
-    const tableElement = document.getElementById(elementId)
-    if (!tableElement) return
-
-    // 转换为工作簿
-    const workbook = XLSX.utils.table_to_book(tableElement, {raw: true})
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-
+// 统一应用边框/表头样式与列宽（DOM 表格导出与纯数据导出共用）
+const styleWorksheet = (worksheet, headerRowCount) => {
     const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1')
 
     const colWidths= []
@@ -76,6 +70,17 @@ export const exportTable = (elementId= 'export-table', excelName= "导出数据"
 
     // 应用列宽
     worksheet['!cols'] = colWidths.map(w => ({wch: w}))
+}
+
+export const exportTable = (elementId= 'export-table', excelName= "导出数据", headerRowCount= 1) => {
+    const tableElement = document.getElementById(elementId)
+    if (!tableElement) return
+
+    // 转换为工作簿
+    const workbook = XLSX.utils.table_to_book(tableElement, {raw: true})
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+
+    styleWorksheet(worksheet, headerRowCount)
 
     // 导出
     try {
@@ -87,4 +92,17 @@ export const exportTable = (elementId= 'export-table', excelName= "导出数据"
     } catch (e) {
         console.error('导出失败:', e)
     }
+}
+
+// 纯数据导出：headers 表头 + rows 二维数组，样式与表格导出一致
+export const exportData = (headers, rows, excelName= "导出数据") => {
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    styleWorksheet(worksheet, 1)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
+    const wbout = XLSX.write(workbook, {bookType: 'xlsx', type: 'array'})
+    FileSaver.saveAs(
+        new Blob([wbout], {type: 'application/octet-stream'}),
+        excelName+'.xlsx'
+    )
 }

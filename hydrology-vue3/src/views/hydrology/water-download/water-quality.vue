@@ -52,12 +52,11 @@
           </el-form>
         </el-header>
 
-        <el-main style="height: 100%;padding-top:0;overflow: hidden">
+        <el-main v-loading="loading" style="height: 100%;padding-top:0;overflow: hidden">
           <el-table
               v-if="spanRules.length>0"
               id='myTable'
               ref="tableRef"
-              v-loading="loading"
               :data="tableData"
               :span-method="objectSpanMethod"
               border
@@ -113,7 +112,7 @@
                              prop="wq_algal"/>
             <el-table-column
 
-                :width="80"
+                :width="160"
                 align="center"
                 column-key="handle"
                 fixed="right"
@@ -126,6 +125,16 @@
                     <View/>
                   </el-icon>
                 </el-button>
+                <el-button
+                    size="small"
+                    title="查看曲线"
+                    type="primary"
+                    @click="handleViewCurve(scope.row)"
+                >
+                  <el-icon>
+                    <TrendCharts/>
+                  </el-icon>
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -136,6 +145,8 @@
             :url-list="[pictureData]"
             @close="pictureShow = false"
         />
+
+        <water-curve-dialog ref="curveDialogRef"/>
 
       </el-container>
     </el-container>
@@ -155,13 +166,14 @@ import {nextTick, watch} from "vue";
 import {debounce} from 'lodash-es'
 import LeftAsideComponent from "@/views/tool/aside/leftAsideComponent.vue";
 import {deepClone} from "@/utils/index.js";
-import {View} from "@element-plus/icons-vue";
+import {View, TrendCharts} from "@element-plus/icons-vue";
 import {useRoute} from "vue-router";
 import waterDownload, {getWaterQualityDic} from "@/api/water-download/water-download.js";
 import DateEnum from "@/views/tool/date/dateEnum.js";
 import {exportTable} from "@/utils/exportTable.js";
 import {downloadFile} from "@/api/common/commonUtils.js";
 import {readableTextColor} from "@/utils/color.js";
+import WaterCurveDialog from './water-curve-dialog.vue'
 
 const pictureData = ref()
 const pictureShow = ref(false)
@@ -268,6 +280,40 @@ const getData = async () => {
   const fieldsToMerge = ['wq_province', 'wq_city',"wq_basin"]
   spanRules.value = await getSpanRules(tableData.value, fieldsToMerge)
   loading.value = false
+}
+
+// 曲线可选指标，默认溶解氧
+const qualityMetrics = [
+  {prop: 'wq_do', label: '溶解氧(mg/L)'},
+  {prop: 'wq_temperature', label: '水温(℃)'},
+  {prop: 'wq_ph', label: 'pH(无量纲)'},
+  {prop: 'wq_ec', label: '电导率(μS/cm)'},
+  {prop: 'wq_ntu', label: '浊度(NTU)'},
+  {prop: 'wq_permanganate', label: '高锰酸盐指数(mg/L)'},
+  {prop: 'wq_ammonia', label: '氨氮(mg/L)'},
+  {prop: 'wq_tp', label: '总磷(mg/L)'},
+  {prop: 'wq_tn', label: '总氮(mg/L)'},
+  {prop: 'wq_chla', label: '叶绿素α(mg/L)'},
+  {prop: 'wq_algal', label: '藻密度(cells/L)'},
+]
+
+const curveDialogRef = ref()
+const handleViewCurve = (row) => {
+  curveDialogRef.value.open({
+    title: `${row.wq_section_name} 水质曲线`,
+    timeProp: 'wq_monitor_time',
+    metrics: qualityMetrics,
+    defaultMetric: 'wq_do',
+    fetchRows: async (dates) => {
+      // 接口仅支持按市/区过滤，取回后前端再按断面筛选
+      const {data} = await waterDownload.getWaterQualityData({
+        dates,
+        dataOrder: 'asc',
+        treeCheckList: {[row.wq_city]: true},
+      })
+      return (data || []).filter(r => r.wq_section_name === row.wq_section_name)
+    },
+  })
 }
 
 const handleExport = async () => {

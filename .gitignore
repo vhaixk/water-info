@@ -1,5 +1,6 @@
 # AI 生成产物统一归档目录（日志/截图/导出等），不进入版本控制
 archive/
+.qoder-credits/
 
 # 依赖与构建产物
 node_modules/

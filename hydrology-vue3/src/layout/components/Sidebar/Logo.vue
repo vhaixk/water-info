@@ -55,6 +55,14 @@ const getLogoTextColor = computed(() => {
   }
   return sideTheme.value === 'theme-dark' ? '#fff' : variables.menuLightText
 })
+
+// 获取Logo文字渐变（深色底用亮色渐变，浅色底用深色渐变）
+const getLogoTextGradient = computed(() => {
+  const lightBg = !settingsStore.isDark && (settingsStore.navType == 3 || sideTheme.value !== 'theme-dark')
+  return lightBg
+    ? 'linear-gradient(90deg, #2563eb 0%, #6f86f2 55%, #7c3aed 100%)'
+    : 'linear-gradient(90deg, #7dd3fc 0%, #93c5fd 55%, #c4b5fd 100%)'
+})
 </script>
 
 <style lang="scss" scoped>
@@ -106,10 +114,11 @@ const getLogoTextColor = computed(() => {
         font-size: 21px;
         font-weight: 700;
         letter-spacing: 3px;
-        background: linear-gradient(120deg, #1e6fff 10%, #00a6e8 55%, #00c6c0 95%);
+        background: v-bind(getLogoTextGradient);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
+        filter: drop-shadow(0 1px 4px rgba(96, 165, 250, 0.25));
         white-space: nowrap;
       }
 

@@ -10,7 +10,7 @@
         <svg-icon
             v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
             :icon-class="item.meta.icon"/>
-        <span style="font-size: 18px"> {{ item.meta.title }}</span>
+        <span> {{ item.meta.title }}</span>
 
       </el-menu-item>
     </template>

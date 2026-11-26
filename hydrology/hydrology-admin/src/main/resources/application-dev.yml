@@ -162,13 +162,3 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
-
-
-# sso配置
-sso:
-  enabled: false
-  ssoUrl:
-  localLoginUrl:
-  localStoreKey:
-  redirectUrl:
-  logoutUrl:

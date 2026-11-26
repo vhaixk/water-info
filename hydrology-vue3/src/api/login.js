@@ -58,20 +58,3 @@ export function getCodeImg() {
     timeout: 20000
   })
 }
-
-// 获取 SSO 配置
-export function getSSOConfig() {
-    return request({
-        url: '/sso/getConfig',
-        method: 'post'
-    })
-}
-
-// SSO 登录验证
-export function ssoLogin(token,localLoginUrl) {
-    return request({
-        url: `${localLoginUrl}`,
-        method: 'post',
-        data: { token }
-    })
-}

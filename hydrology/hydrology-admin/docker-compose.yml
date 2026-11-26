@@ -1,12 +1,63 @@
 version: '3.8'
 
 services:
+  mysql:
+    image: mysql:8.0.40
+    container_name: water-info-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: WaterInfo2026
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --default-time-zone=+08:00
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      # 首次启动(数据目录为空)时自动导入 water_info 数据库
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # 用 TCP 探测，避免初始化导入阶段临时服务器(socket-only)提前通过健康检查
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pWaterInfo2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - water-info-net
+
+  redis:
+    image: redis:latest
+    container_name: water-info-redis
+    command: ["redis-server", "--requirepass", "shui1234", "--appendonly", "no"]
+    ports:
+      - "16379:6379"
+    volumes:
+      - ./redis/data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "shui1234", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - water-info-net
+
   water-info:
     image: water-info:v1
     container_name: water-info
     ports:
       - "50062:18890"
       - "50063:18861"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./profile:/project/profile
       - ./hydrology-admin.jar:/project/hydrology-admin.jar

@@ -51,3 +51,4 @@ profile/*
 !profile/water-download/
 profile/water-download/*
 !profile/water-download/water-quality/
+.qoder-credits

@@ -55,12 +55,11 @@
           </el-form>
         </el-header>
 
-        <el-main style="height: 100%;padding-top:0;overflow: hidden">
+        <el-main v-loading="loading" style="height: 100%;padding-top:0;overflow: hidden">
           <el-table
               v-if="spanRules.length>0"
               id='myTable'
               ref="tableRef"
-              v-loading="loading"
               :data="tableData"
               :span-method="objectSpanMethod"
               border
@@ -80,7 +79,7 @@
 
             <el-table-column
 
-                :width="80"
+                :width="160"
                 align="center"
                 column-key="handle"
                 fixed="right"
@@ -94,6 +93,16 @@
                     <View/>
                   </el-icon>
                 </el-button>
+                <el-button
+                    size="small"
+                    title="查看曲线"
+                    type="primary"
+                    @click="handleViewCurve(scope.row)"
+                >
+                  <el-icon>
+                    <TrendCharts/>
+                  </el-icon>
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -104,6 +113,8 @@
             :url-list="[pictureData]"
             @close="pictureShow = false"
         />
+
+        <water-curve-dialog ref="curveDialogRef"/>
 
       </el-container>
     </el-container>
@@ -123,12 +134,13 @@ import {nextTick, watch} from "vue";
 import {debounce} from 'lodash-es'
 import LeftAsideComponent from "@/views/tool/aside/leftAsideComponent.vue";
 import {deepClone} from "@/utils/index.js";
-import {View} from "@element-plus/icons-vue";
+import {View, TrendCharts} from "@element-plus/icons-vue";
 import {useRoute} from "vue-router";
 import waterDownload from "@/api/water-download/water-download.js";
 import DateEnum from "@/views/tool/date/dateEnum.js";
 import {exportTable} from "@/utils/exportTable.js";
 import waterDownloadColumn, {columns} from './water-download-column.js'
+import WaterCurveDialog from './water-curve-dialog.vue'
 import {downloadFile} from "@/api/common/commonUtils.js";
 
 const pictureData = ref()
@@ -214,6 +226,29 @@ const handleViewPicture = async (index, row) => {
   const blob = new Blob([await waterDownload.getProfileData(path)], {type: 'image/png'})
   pictureData.value = URL.createObjectURL(blob)
   pictureShow.value = true
+}
+
+const curveDialogRef = ref()
+const handleViewCurve = (row) => {
+  const cols = waterDownloadColumn.columns[metaName]
+  const valueCol = cols.find(c => c.prop === 'monitor_value')
+  const warnCol = cols.find(c => c.prop === 'monitor_value_warn')
+  curveDialogRef.value.open({
+    title: `${row.station_name} ${valueCol.label}曲线`,
+    timeProp: 'monitor_time',
+    metrics: [{prop: valueCol.prop, label: valueCol.label}],
+    referenceLines: warnCol ? [{prop: warnCol.prop, label: warnCol.label}] : [],
+    fetchRows: async (dates) => {
+      const {data} = await waterDownload.getData({
+        dates,
+        dataOrder: 'asc',
+        treeCheckList: {[row.station_name]: true},
+        metaName,
+        mappingName,
+      })
+      return data
+    },
+  })
 }
 const handleExport = async () => {
   exportLoading.value = true

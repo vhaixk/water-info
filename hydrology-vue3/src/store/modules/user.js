@@ -4,7 +4,6 @@ import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { isHttp, isEmpty } from "@/utils/validate"
 import defAva from '@/assets/logo/logo.png'
-import { ssoLogout } from '@/utils/sso'
 
 const useUserStore = defineStore(
   'user',
@@ -84,12 +83,8 @@ const useUserStore = defineStore(
             this.permissions = []
             removeToken()
 
-            // SSO 开启时走 SSO 登出（跳转）
-            const ssoHandled = await ssoLogout()
-            if (!ssoHandled) {
-                // 非 SSO 登出，留在 /index
-                location.href = '/index'
-            }
+            // 独立登录，登出后留在 /index
+            location.href = '/index'
         }
     }
   })

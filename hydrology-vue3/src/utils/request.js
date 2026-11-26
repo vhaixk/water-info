@@ -6,7 +6,6 @@ import { tansParams, blobValidate } from '@/utils/hydrology'
 import cache from '@/plugins/cache'
 import { saveAs } from 'file-saver'
 import useUserStore from '@/store/modules/user'
-import { ssoLogout } from '@/utils/sso'
 
 let downloadLoadingInstance
 // 是否显示重新登录

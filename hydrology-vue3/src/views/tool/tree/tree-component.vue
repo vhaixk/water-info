@@ -1,5 +1,5 @@
 <template>
-  <div class="tree-wrapper" style="overflow: auto" v-loading.fullscreen.lock="treeConfig.loading">
+  <div class="tree-wrapper" style="overflow: auto" v-loading="treeConfig.loading">
     <!-- 修复点 1: 绑定 compositionstart 和 compositionend -->
     <el-input
         v-model="filterText"

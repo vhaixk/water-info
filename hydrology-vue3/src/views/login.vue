@@ -31,16 +31,6 @@
       <img :src="logo" class="login-logo" alt=""/>
       <h3 class="title">{{ title }}</h3>
 
-      <!-- SSO 验证失败提示 -->
-      <el-alert
-          v-if="errorMsg"
-          :closable="false"
-          :title="errorMsg"
-          show-icon
-          style="margin-bottom: 20px;"
-          type="error"
-      />
-
       <el-form-item prop="username">
         <el-input
             v-model="loginForm.username"
@@ -114,17 +104,14 @@
 </template>
 
 <script setup>
-import {getCodeImg, getSSOConfig, ssoLogin} from "@/api/login"
+import {getCodeImg} from "@/api/login"
 import SliderCaptcha from "@/components/SliderCaptcha/index.vue"
 import logo from "@/assets/logo/logo.png"
 import Cookies from "js-cookie"
 import {encrypt, decrypt} from "@/utils/jsencrypt"
 import useUserStore from '@/store/modules/user'
 import defaultSettings from '@/settings'
-import {getToken, setToken} from '@/utils/auth'
-import {isHttp, isEmpty} from "@/utils/validate"
 import {ElMessage} from 'element-plus'
-import usePermissionStore from "@/store/modules/permission.js";
 
 const title = import.meta.env.VITE_APP_TITLE
 const footerContent = defaultSettings.footerContent
@@ -155,77 +142,9 @@ const sliderRef = ref(null)
 const register = ref(false)
 const redirect = ref(undefined)
 
-// SSO 状态
-const ssoEnabled = ref(false)
-const ssoConfig = ref({ssoUrl: '', localStoreKey: '', localLoginUrl: '', redirectUrl: '',logoutUrl:''})
-const errorMsg = ref('')
-const SSO_CONFIG_KEY = 'SSO_CONFIG'
-
 watch(route, (newRoute) => {
   redirect.value = newRoute.query && newRoute.query.redirect
 }, {immediate: true})
-
-// 加载 SSO 配置
-async function loadSSOConfig() {
-  // 先读缓存作为兜底
-  const cached = localStorage.getItem(SSO_CONFIG_KEY)
-  if (cached) {
-    try {
-      ssoConfig.value = JSON.parse(cached)
-      ssoEnabled.value = ssoConfig.value.enabled
-    } catch (e) { /* ignore */ }
-  }
-
-  // 异步获取最新配置（失败则保持缓存值）
-  try {
-    const res = await getSSOConfig()
-    if (res.code === 200 && res.data) {
-      ssoConfig.value = res.data
-      ssoEnabled.value = res.data.enabled
-      localStorage.setItem(SSO_CONFIG_KEY, JSON.stringify(res.data))
-    }
-  } catch (e) {
-    // API 失败，使用缓存的值继续
-  }
-}
-
-// 验证 SSO token（URL 参数或 localStorage key）
-function verifySSOToken(token) {
-  loading.value = true
-  errorMsg.value = ''
-  return ssoLogin(token, ssoConfig.value.localLoginUrl).then(async res => {
-    debugger
-    if (res.code === 200 && res.data) {
-      setToken(res.data.data)
-       await userStore.getInfo()
-      const accessRoutes = await usePermissionStore().generateRoutes()
-      accessRoutes.forEach(route => {
-        if (!isHttp(route.path)) {
-          router.addRoute(route)
-        }
-      })
-      return accessRoutes
-
-    } else {
-      errorMsg.value = res.msg || 'SSO 验证失败'
-      throw new Error(res.msg || 'SSO 验证失败')
-    }
-  }).then(() => {
-    router.replace('/')
-  }).catch(err => {
-    errorMsg.value = err.msg || 'SSO 验证失败'
-    loading.value = false
-    // 验证失败 → 跳回 SSO，让用户重新登录
-    window.location.href = ssoConfig.value.redirectUrl
-  })
-}
-
-// 跳转 SSO，带上当前页 URL
-function redirectSSO() {
-  const frontendUrl = window.location.origin + window.location.pathname
-  // const separator = ssoConfig.value.ssoUrl.includes('?') ? '&' : '?'
-  window.location.href = `${ssoConfig.value.redirectUrl}=${encodeURIComponent(frontendUrl)}`
-}
 
 function handleLogin() {
   proxy.$refs.loginRef.validate(valid => {
@@ -316,50 +235,9 @@ function getCookie() {
   }
 }
 
-// 核心流程
-function initLoginFlow() {
-  loadSSOConfig().then(() => {
-    if (ssoConfig.value.enabled) {
-      const urlParams = new URLSearchParams(window.location.search)
-      let urlToken = urlParams.get('token')
-
-      // 如果没拿到，试试从 redirect 参数里提取
-      if (!urlToken) {
-        const redirectRaw = urlParams.get('redirect')
-        if (redirectRaw) {
-          // 从 /index?token=111 这种字符串里提取 token
-          const match = redirectRaw.match(/token=([^&]+)/)
-          if (match) urlToken = match[1]
-        }
-      }
-      if (urlToken) {
-        verifySSOToken(urlToken).then(() => {
-          window.history.replaceState({}, '', '/login')
-        })
-        return
-      }
-
-      // 2. URL 没 token → 查 localStorage
-      const storageKey = ssoConfig.value.localStoreKey
-      if (storageKey) {
-        const ssoToken = localStorage.getItem(storageKey)
-        if (ssoToken) {
-          verifySSOToken(ssoToken.replace('"','').replace('"',''))
-          return
-        }
-      }
-
-      // 3. 都没有 → 跳 SSO，带上当前页 URL
-      redirectSSO()
-    } else {
-      // SSO 没开启 → 保持原样
-      getCode()
-      getCookie()
-    }
-  })
-}
-
-initLoginFlow()
+// 核心流程：独立登录，直接加载验证码与记住的账号
+getCode()
+getCookie()
 </script>
 
 <style lang='scss' scoped>
@@ -510,10 +388,31 @@ initLoginFlow()
 }
 
 .title {
-  margin: 0px auto 14px auto;
+  position: relative;
+  margin: 0px auto 18px auto;
+  padding-bottom: 10px;
   text-align: center;
-  color: #333333;
-  font-size: 20px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  // 科技风蓝紫渐变文字，呼应左侧插画主色
+  background: linear-gradient(90deg, #3b82f6 0%, #6f86f2 55%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  // 标题下渐变装饰线
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  }
 }
 
 .login-logo {
