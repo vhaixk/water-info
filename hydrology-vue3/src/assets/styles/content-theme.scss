@@ -500,6 +500,26 @@ html.tem-app-tech .el-select-dropdown__item.is-selected {
   background: rgba(var(--tem-primary-rgb), 0.18);
 }
 
+/* 多选已选 tag：EP info 灰字在深底上对比不足，统一 tem 皮肤（边框与背景同色）；
+   折叠标签 tooltip  teleported 到 body 仍为浅底，不受影响 */
+html.tem-app-tech .el-dialog .el-select .el-tag,
+html.tem-app-tech .app-main .el-select .el-tag {
+  background: rgba(var(--tem-primary-rgb), 0.16);
+  border-color: rgba(var(--tem-primary-rgb), 0.16);
+  color: var(--tem-text-soft);
+}
+
+html.tem-app-tech .el-dialog .el-select .el-tag .el-tag__close,
+html.tem-app-tech .app-main .el-select .el-tag .el-tag__close {
+  color: var(--tem-muted);
+}
+
+html.tem-app-tech .el-dialog .el-select .el-tag .el-tag__close:hover,
+html.tem-app-tech .app-main .el-select .el-tag .el-tag__close:hover {
+  background: var(--tem-primary);
+  color: var(--tem-on-primary);
+}
+
 html.tem-app-tech .el-picker__popper,
 html.tem-app-tech .el-popper.is-light.el-picker__popper {
   --el-bg-color-overlay: rgba(var(--tem-rgb-surface), 0.98);

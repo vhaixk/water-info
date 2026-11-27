@@ -50,6 +50,8 @@ public class IndexController {
                     mimeType = "application/octet-stream"; // 兜底默认值
                 }
                 response.setContentType(mimeType);
+                // 显式 Content-Length：避免 chunked 传输导致前端下载进度无法计算百分比
+                response.setContentLengthLong(fileSize);
 
                 // 5. 流式输出文件内容
                 Files.copy(path, response.getOutputStream());

@@ -96,9 +96,8 @@ function logout() {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    userStore.logOut().then(() => {
-      location.href = '/index'
-    })
+    // 跳转统一由 logOut 处理，此处不再写死根路径
+    userStore.logOut()
   }).catch(() => {
   })
 }

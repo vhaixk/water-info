@@ -83,8 +83,8 @@ const useUserStore = defineStore(
             this.permissions = []
             removeToken()
 
-            // 独立登录，登出后留在 /index
-            location.href = '/index'
+            // 独立登录，登出后按路由 base 回首页（生产为子路径），写死根路径会 404
+            location.href = router.options.history.base + 'index'
         }
     }
   })
