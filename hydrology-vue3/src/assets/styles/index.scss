@@ -99,7 +99,9 @@ div:focus {
   }
 }
 
-aside {
+// 排除 el-aside：该元素选择器会命中 Element Plus 的 <aside class="el-aside">，
+// 导致 append-to-body 弹窗内的侧栏带上浅灰底与内边距（曲线弹窗左表格白框问题）
+aside:not(.el-aside) {
   background: #eef1f6;
   padding: 8px 24px;
   margin-bottom: 20px;

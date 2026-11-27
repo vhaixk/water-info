@@ -63,8 +63,6 @@
               <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns.nickName.visible" :show-overflow-tooltip="true" />
               <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true" />
               <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns.phonenumber.visible" width="120" />
-              <el-table-column :show-overflow-tooltip="true" label="涉及电站" prop="rolePowerId" min-width="150" :formatter="(row, column) => formatterPower(row,column)"/>
-              <el-table-column :show-overflow-tooltip="true" label="所属系统" prop="roleSystemId" min-width="150" :formatter="(row, column) => formatterSystem(row,column)"/>
 
               <el-table-column label="状态" align="center" key="status" v-if="columns.status.visible">
                 <template #default="scope">
@@ -177,38 +175,6 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="涉及电站" prop="rolePowerId">
-          <el-select
-              v-model="rolePowerIds"
-              clearable
-              multiple
-              placeholder="涉及电站"
-              style="width: 240px"
-          >
-            <el-option
-                v-for="dict in hy_base_power_station"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="所属系统" prop="roleSystemId">
-          <el-select
-              v-model="form.roleSystemId"
-              clearable
-              placeholder="涉及电站"
-              style="width: 240px"
-          >
-            <el-option
-                v-for="dict in hy_upload_token_mapping"
-                :key="dict.value"
-                :label="dict.label"
-                :value="dict.value"
-            />
-          </el-select>
-        </el-form-item>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注">
@@ -280,10 +246,6 @@ const enabledDeptOptions = ref(undefined)
 const initPassword = ref(undefined)
 const postOptions = ref([])
 const roleOptions = ref([])
-
-const rolePowerIds = ref([])
-const {hy_base_power_station} = proxy.useDict("hy_base_power_station")
-const {hy_upload_token_mapping} = proxy.useDict("hy_upload_token_mapping")
 
 /*** 用户导入参数 */
 const upload = reactive({
@@ -548,7 +510,6 @@ function cancel() {
 function handleAdd() {
   reset()
 
-  rolePowerIds.value = []
   getUser().then(response => {
     postOptions.value = response.posts
     roleOptions.value = response.roles
@@ -570,10 +531,6 @@ function handleUpdate(row) {
     form.value.postIds = response.postIds
     form.value.roleIds = response.roleIds
 
-    if (form.value.rolePowerId) {
-      rolePowerIds.value = form.value.rolePowerId.split(',')
-    }
-
     open.value = true
     title.value = "修改用户"
     form.value.password = ""
@@ -583,7 +540,6 @@ function handleUpdate(row) {
 /** 提交按钮 */
 function submitForm() {
   proxy.$refs["userRef"].validate(valid => {
-    form.value.rolePowerId = rolePowerIds.value.join(',')
     if (valid) {
       if (form.value.userId != undefined) {
         updateUser(form.value).then(() => {
@@ -600,23 +556,6 @@ function submitForm() {
       }
     }
   })
-}
-
-
-
-const formatterPower = (row, item) => {
-
-  const value = row[item.property]
-  if (!value) return ""
-  return value.split(',').map(item => hy_base_power_station.value.find(power => item === power.value).label).join(',')
-}
-
-
-const formatterSystem = (row, item) => {
-
-  const value = row[item.property]
-  if (!value) return ""
-  return  hy_upload_token_mapping.value.find(system => value === system.value).label
 }
 
 onMounted(() => {
