@@ -16,12 +16,14 @@
           <el-input placeholder="请输入" v-model="info.className" />
         </el-form-item>
       </el-col>
-      <el-form-item label="删改刷新缓存" prop="refreshCache">
-        <el-radio-group v-model="info.refreshCache">
-          <el-radio value="1">是</el-radio>
-          <el-radio value="0">否</el-radio>
-        </el-radio-group>
-      </el-form-item>
+      <el-col :span="12">
+        <el-form-item label="删改刷新缓存" prop="refreshCache">
+          <el-radio-group v-model="info.refreshCache">
+            <el-radio value="1">是</el-radio>
+            <el-radio value="0">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-col>
 
       <el-col :span="12">
         <el-form-item label="作者" prop="functionAuthor">

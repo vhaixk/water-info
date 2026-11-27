@@ -140,8 +140,8 @@
     <import-table ref="importRef" @ok="handleQuery"/>
     <table-info ref="tableInfo"></table-info>
 
-    <el-dialog v-model="editInfo.editDialogVisible" :title="editInfo.title" style="height: 82vh" align-center
-               draggable width="98%">
+    <el-dialog v-model="editInfo.editDialogVisible" :title="editInfo.title" align-center
+               draggable width="92%">
       <edit-table :tableId="editInfo.tableId" @reset-query="resetQuery"></edit-table>
     </el-dialog>
   </div>
