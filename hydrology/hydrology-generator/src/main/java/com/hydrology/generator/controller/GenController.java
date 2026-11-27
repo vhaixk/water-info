@@ -107,6 +107,11 @@ public class GenController extends BaseController {
     @PostMapping("/importTable")
     public AjaxResult importTableSave(String tables) {
         String[] tableNames = Convert.toStrArray(tables);
+        for (String tableName : tableNames) {
+            if (tableName != null && tableName.startsWith("ds_")) {
+                throw new com.hydrology.common.exception.ServiceException("ds_ 前缀为关联数据集保留，禁止导入物理表");
+            }
+        }
         // 查询表信息
         List<GenTable> tableList = genTableService.selectDbTableListByNames(tableNames);
         genTableService.importGenTable(tableList, SecurityUtils.getUsername());

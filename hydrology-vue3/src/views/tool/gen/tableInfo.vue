@@ -37,6 +37,11 @@ const tableConfig =ref( {
 const openDialog = (tableName,exportName) => {
   tableConfig.value.tableName =tableName
   tableConfig.value.exportName =exportName
+  // 关联数据集只读：隐藏增/改/删按钮
+  const readonly = String(tableName).startsWith('ds_')
+  tableConfig.value.toolbar.add = !readonly
+  tableConfig.value.toolbar.update = !readonly
+  tableConfig.value.toolbar.delete = !readonly
   setTimeout(()=>  dialogVisible.value = true,0)
 
 }

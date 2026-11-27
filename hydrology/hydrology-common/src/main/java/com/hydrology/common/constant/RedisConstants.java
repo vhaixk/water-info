@@ -24,6 +24,11 @@ public class RedisConstants {
     public static final String COLUMN_PK = "column_pk:";
 
     /**
+     * 关联数据集前缀
+     */
+    public static final String DATASET_PREFIX = "dataset_prefix:";
+
+    /**
      * 有关测站前缀
      */
     public static final String STATION_PREFIX = "station:";

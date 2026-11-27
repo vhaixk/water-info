@@ -121,12 +121,16 @@ public class GetDbUtils {
 
     @SneakyThrows
     private static void checkPower(QueryEntity queryEntity) {
+        checkPower(queryEntity, queryEntity.getTableName());
+    }
+
+    /** 行级站点权限：tableName 用于判定 hy_ 语义，数据集场景传主表名 */
+    public static void checkPower(QueryEntity queryEntity, String tableName) {
 
         String powerIds = SecurityUtils.getPowerIds();
         if (StrUtil.isBlank(powerIds)) return;
         String systemId = SecurityUtils.getSystemId();
         if (StrUtil.isBlank(systemId)) return;
-        String tableName = queryEntity.getTableName();
 
         if (StrUtil.containsIgnoreCase(tableName, "hy_")) {
             // 用户传入的站点条件必须与授权范围求交集，防止自选站点绕过行级数据权限
@@ -186,7 +190,7 @@ public class GetDbUtils {
     /**
      * 构建 where 条件
      */
-    private static void getWhereConditions(
+    public static void getWhereConditions(
             List<QueryEntity.Column> columns,
             Map<String, Entity> columnConfigList,
             List<String> whereFields,
@@ -339,7 +343,7 @@ public class GetDbUtils {
     /**
      * 获取排序字段
      */
-    private static String getOrderBy(List<QueryEntity.Order> columns, Map<String, Entity> columnConfigList) {
+    public static String getOrderBy(List<QueryEntity.Order> columns, Map<String, Entity> columnConfigList) {
 
         columns = columns.stream().filter(column -> columnConfigList.containsKey(column.getColumnName())).collect(Collectors.toList());
         if (columns.isEmpty()) {

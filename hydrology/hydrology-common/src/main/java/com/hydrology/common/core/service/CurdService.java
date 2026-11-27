@@ -1,31 +1,21 @@
 package com.hydrology.common.core.service;
 
-import cn.hutool.core.comparator.CompareUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.Entity;
-import cn.hutool.poi.excel.ExcelUtil;
-import cn.hutool.poi.excel.ExcelWriter;
-import com.hydrology.common.config.SystemConfig;
 import com.hydrology.common.constant.HttpStatus;
 import com.hydrology.common.constant.RedisConstants;
-import com.hydrology.common.core.domain.entity.SysDictData;
 import com.hydrology.common.core.entity.QueryEntity;
 import com.hydrology.common.core.redis.RedisCache;
 import com.hydrology.common.exception.ServiceException;
-import com.hydrology.common.utils.DictUtils;
 import com.hydrology.common.utils.SecurityUtils;
 import com.hydrology.common.utils.db.GetDbUtils;
 import com.hydrology.common.utils.db.ResultEntity;
+import com.hydrology.common.utils.poi.ExcelExportUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,11 +25,11 @@ public class CurdService {
     /** 单次导出行数上限 */
     public static final long EXPORT_MAX_ROWS = 200_000L;
 
-    /** 导出文件保留天数 */
-    private static final long EXPORT_RETAIN_DAYS = 7;
-
     @Autowired
     private RedisCache redisCache;
+
+    @Autowired
+    private DatasetService datasetService;
 
     private static final Set<String> RESTRICTED_TABLES = new HashSet<String>() {{
         add("sys_");
@@ -66,17 +56,28 @@ public class CurdService {
     }
 
     public Map<String, Entity> getColumnData(String tableName) {
+        if (datasetService.isDataset(tableName)) {
+            return datasetService.getColumnData(tableName);
+        }
         checkTablePermission(tableName);
         return this.redisCache.getCacheMap(RedisConstants.COLUMN_PREFIX + tableName, Entity.class);
     }
 
     public ResultEntity getTableData(QueryEntity queryEntity) {
+        if (datasetService.isDataset(queryEntity.getTableName())) {
+            return datasetService.query(queryEntity);
+        }
         checkTablePermission(queryEntity.getTableName());
 
         return GetDbUtils.queryDataByEntity(queryEntity);
     }
 
     public Entity getTableDataOne(QueryEntity queryEntity) {
+        if (datasetService.isDataset(queryEntity.getTableName())) {
+            queryEntity.setPage(1L).setPageSize(1L);
+            List<Entity> rows = datasetService.query(queryEntity).getDataList();
+            return rows.isEmpty() ? Entity.create() : rows.get(0);
+        }
         checkTablePermission(queryEntity.getTableName());
 
         return GetDbUtils.queryOneDataByEntity(queryEntity);
@@ -84,12 +85,18 @@ public class CurdService {
 
     public long insertOrUpdate(Entity queryOne) {
         String tableName = queryOne.getStr("tableName");
+        if (datasetService.isDataset(tableName)) {
+            throw new ServiceException("关联数据集仅支持查询和导出", HttpStatus.FORBIDDEN);
+        }
         checkTablePermission(tableName);
         checkRowWritePermission(tableName, queryOne);
         return GetDbUtils.insertOrUpdate(queryOne);
     }
 
     public int delete(String tableName, Entity entity) {
+        if (datasetService.isDataset(tableName)) {
+            throw new ServiceException("关联数据集仅支持查询和导出", HttpStatus.FORBIDDEN);
+        }
         checkTablePermission(tableName);
         entity.remove("tableName");
         // 行级数据权限：将允许访问的站点范围注入删除条件，防止越权删除他人站点数据
@@ -117,6 +124,9 @@ public class CurdService {
     }
 
     public String export(String tableName, String exportName, QueryEntity queryEntity) {
+        if (datasetService.isDataset(tableName)) {
+            return datasetService.export(tableName, exportName, queryEntity);
+        }
         checkTablePermission(tableName);
         if (queryEntity == null) {
             queryEntity = new QueryEntity();
@@ -130,60 +140,9 @@ public class CurdService {
         }
 
         Map<String, Entity> columnData = redisCache.getCacheMap(RedisConstants.COLUMN_PREFIX + tableName, Entity.class);
-        Map<String, Map<String, String>> dictMap = new HashMap<>();
-
-        List<String> sortKeys = columnData.keySet()
-                .stream()
-                .filter(columnName -> {
-                    Entity columnEntity = columnData.get(columnName);
-                    String isList = columnEntity.getStr("is_list");
-                    String dictType = columnEntity.getStr("dict_type");
-                    if (StrUtil.isNotBlank(dictType)) {
-                        List<SysDictData> dictList = DictUtils.getDictCache(dictType);
-                        Map<String, String> dictDataMap = dictList
-                                .stream()
-                                .collect(Collectors.toMap(SysDictData::getDictValue, SysDictData::getDictLabel));
-                        dictMap.put(columnName, dictDataMap);
-                    }
-                    return StrUtil.isNotBlank(isList) && "1".equals(isList);
-                })
-                .sorted((c1, c2) -> CompareUtil.compare(columnData.get(c1).getInt("sort"), columnData.get(c2).getInt("sort")))
-                .collect(Collectors.toList());
-
         queryEntity.setPageSize(Math.max(total, 1L));
         ResultEntity resultEntity = GetDbUtils.queryDataByEntity(queryEntity);
-        List<Entity> dataList = resultEntity.getDataList();
-
-        String filePath = StrUtil.format(
-                "/profile/export/hydrology/{}/{}_{}.xlsx",
-                DateUtil.today().replace("-", "/"),
-                sanitizeExportName(exportName),
-                IdUtil.fastSimpleUUID()
-        );
-        String realPath = SystemConfig.getRealPath(filePath);
-
-        // 字典翻译：字典项缺失时保留原值，避免导出出现空列
-        for (Map.Entry<String, Map<String, String>> entry : dictMap.entrySet()) {
-            String columnName = entry.getKey();
-            Map<String, String> dicMapData = entry.getValue();
-            for (Entity entity : dataList) {
-                String rawValue = entity.getStr(columnName);
-                entity.set(columnName, dicMapData.getOrDefault(rawValue, rawValue));
-            }
-        }
-
-        // 流式写出，避免大数据量导出 OOM
-        try (ExcelWriter writer = ExcelUtil.getBigWriter(realPath)) {
-            writer.setOnlyAlias(true);
-            for (int i = 0; i < sortKeys.size(); i++) {
-                String sortKey = sortKeys.get(i);
-                writer.addHeaderAlias(sortKey, columnData.get(sortKey).getStr("column_comment"));
-                writer.setColumnWidth(i, 22);
-            }
-            writer.write(dataList);
-        }
-        cleanExpiredExportFiles();
-        return filePath;
+        return ExcelExportUtils.writeExcel(resultEntity.getDataList(), columnData, exportName);
     }
 
     /**
@@ -255,39 +214,5 @@ public class CurdService {
             return ((List<?>) value).stream().map(String::valueOf).collect(Collectors.toList());
         }
         return Collections.singletonList(String.valueOf(value));
-    }
-
-    /**
-     * 消毒导出文件名：去除路径分隔符、通配符与点号，防止路径穿越
-     */
-    private static String sanitizeExportName(String exportName) {
-        String name = StrUtil.blankToDefault(exportName, "export");
-        name = name.replaceAll("[\\\\/:*?\"<>|.\\s]", "");
-        if (name.length() > 100) {
-            name = name.substring(0, 100);
-        }
-        return StrUtil.blankToDefault(name, "export");
-    }
-
-    /**
-     * 异步清理过期的导出文件，避免导出目录无限增长
-     */
-    private void cleanExpiredExportFiles() {
-        CompletableFuture.runAsync(() -> {
-            try {
-                File exportRoot = new File(SystemConfig.getProfile(), "export/hydrology");
-                if (!exportRoot.exists()) {
-                    return;
-                }
-                long expireBefore = System.currentTimeMillis() - EXPORT_RETAIN_DAYS * 24 * 3600 * 1000L;
-                for (File file : FileUtil.loopFiles(exportRoot)) {
-                    if (file.lastModified() < expireBefore) {
-                        FileUtil.del(file);
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("清理过期导出文件失败", e);
-            }
-        });
     }
 }

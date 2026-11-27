@@ -29,6 +29,7 @@ public class GenTableCacheService implements CommandLineRunner {
     @Override
     public void run(String... args) {
         this.initTableCache();
+        this.initDatasetCache();
         CacheUtils.initEntityDicCache(null);
     }
 
@@ -75,5 +76,26 @@ public class GenTableCacheService implements CommandLineRunner {
                 .filter(entity -> entity.getStr("is_pk").equals("1"))
                 .collect(Collectors.toMap(entity -> entity.getStr("column_name"), entity -> entity));
         this.redisCache.setCacheMap(RedisConstants.COLUMN_PK + tableName, collect, true);
+    }
+
+    /** 启动时全量加载关联数据集配置缓存 */
+    @SneakyThrows
+    public void initDatasetCache() {
+        Db db = GetDbUtils.getDb();
+        List<Entity> datasets = db.query("select * from gen_dataset");
+        for (Entity ds : datasets) {
+            refreshDatasetCache(ds.getStr("dataset_name"));
+        }
+        log.info("初始化关联数据集缓存成功！共 {} 个", datasets.size());
+    }
+
+    /** 刷新单个数据集缓存（实现位于 common 侧 DatasetService，此处委托） */
+    public void refreshDatasetCache(String datasetName) {
+        cn.hutool.extra.spring.SpringUtil.getBean(com.hydrology.common.core.service.DatasetService.class).reloadCache(datasetName);
+    }
+
+    /** 删除数据集缓存 */
+    public void removeDatasetCache(String datasetName) {
+        cn.hutool.extra.spring.SpringUtil.getBean(com.hydrology.common.core.service.DatasetService.class).removeCache(datasetName);
     }
 }

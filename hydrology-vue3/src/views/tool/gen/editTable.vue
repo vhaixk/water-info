@@ -216,9 +216,6 @@
           </el-table-column>
         </el-table>
       </el-tab-pane>
-      <el-tab-pane label="生成信息" name="genInfo">
-        <gen-info-form ref="genInfo" :info="info" :tables="tables"/>
-      </el-tab-pane>
     </el-tabs>
     <el-form label-width="100px">
       <div style="text-align: center;margin-left:-100px;margin-top:10px;">
@@ -233,7 +230,6 @@
 import {getGenTable, updateGenTable} from "@/api/tool/gen"
 import {optionselect as getDictOptionselect} from "@/api/system/dict/type"
 import basicInfoForm from "./basicInfoForm"
-import genInfoForm from "./genInfoForm"
 import Sortable from 'sortablejs'
 
 const route = useRoute()
@@ -256,8 +252,7 @@ const emit = defineEmits(['resetQuery'])
 /** 提交按钮 */
 function submitForm() {
   const basicForm = proxy.$refs.basicInfo.$refs.basicInfoForm
-  const genForm = proxy.$refs.genInfo.$refs.genInfoForm
-  Promise.all([basicForm, genForm].map(getFormPromise)).then(res => {
+  Promise.all([basicForm].map(getFormPromise)).then(res => {
     const validateResult = res.every(item => !!item)
     if (validateResult) {
       const genTable = Object.assign({}, info.value)
