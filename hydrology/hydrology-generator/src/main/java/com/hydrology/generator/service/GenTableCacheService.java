@@ -78,15 +78,18 @@ public class GenTableCacheService implements CommandLineRunner {
         this.redisCache.setCacheMap(RedisConstants.COLUMN_PK + tableName, collect, true);
     }
 
-    /** 启动时全量加载关联数据集配置缓存 */
-    @SneakyThrows
+    /** 启动时全量加载关联数据集配置缓存；缺表环境降级为告警，不阻断启动 */
     public void initDatasetCache() {
-        Db db = GetDbUtils.getDb();
-        List<Entity> datasets = db.query("select * from gen_dataset");
-        for (Entity ds : datasets) {
-            refreshDatasetCache(ds.getStr("dataset_name"));
+        try {
+            Db db = GetDbUtils.getDb();
+            List<Entity> datasets = db.query("select * from gen_dataset");
+            for (Entity ds : datasets) {
+                refreshDatasetCache(ds.getStr("dataset_name"));
+            }
+            log.info("初始化关联数据集缓存成功！共 {} 个", datasets.size());
+        } catch (Exception e) {
+            log.warn("初始化关联数据集缓存失败，请确认已执行 sql/dataset_init.sql", e);
         }
-        log.info("初始化关联数据集缓存成功！共 {} 个", datasets.size());
     }
 
     /** 刷新单个数据集缓存（实现位于 common 侧 DatasetService，此处委托） */

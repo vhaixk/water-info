@@ -32,7 +32,7 @@
       <!-- 步骤0：基本信息+主表 -->
       <el-form v-show="wizard.step===0" label-width="90px" style="margin-top:16px">
         <el-form-item label="名称" required>
-          <el-input v-model="form.dataset_name" placeholder="ds_ 前缀，如 ds_ybt_station_monitor" style="width:320px"/>
+          <el-input v-model="form.dataset_name" :disabled="!!form.dataset_id" placeholder="ds_ 前缀，如 ds_ybt_station_monitor" style="width:320px"/>
         </el-form-item>
         <el-form-item label="描述"><el-input v-model="form.dataset_comment" style="width:320px"/></el-form-item>
         <el-form-item label="主表" required>
@@ -181,7 +181,7 @@ async function openWizard(row) {
     await loadAllColumns()
     for (const c of res.data.columns) {
       const hit = candidates.value.find(x => x.source_table === c.source_table && x.source_column === c.source_column)
-      if (hit) Object.assign(hit, { checked: true, alias: c.alias, column_comment: c.column_comment, dict_type: c.dict_type })
+      if (hit) Object.assign(hit, { checked: true, alias: c.alias, column_comment: c.column_comment, dict_type: c.dict_type, is_show: c.is_show, is_list: c.is_list })
     }
   }
   wizard.open = true
@@ -200,7 +200,7 @@ function nextStep() {
 function payload() {
   const cols = candidates.value.filter(c => c.checked).map((c, i) => ({
     source_table: c.source_table, source_column: c.source_column, alias: c.alias,
-    column_comment: c.column_comment, dict_type: c.dict_type, is_show: '1', is_list: '1', sort: i + 1
+    column_comment: c.column_comment, dict_type: c.dict_type, is_show: c.is_show ?? '1', is_list: c.is_list ?? '1', sort: i + 1
   }))
   return { dataset: { ...form.value, join_config: JSON.stringify(form.value.joins) }, columns: cols }
 }

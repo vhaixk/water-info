@@ -12,6 +12,7 @@ import com.hydrology.common.constant.RedisConstants;
 import com.hydrology.common.core.entity.QueryEntity;
 import com.hydrology.common.core.redis.RedisCache;
 import com.hydrology.common.exception.ServiceException;
+import com.hydrology.common.utils.SecurityUtils;
 import com.hydrology.common.utils.db.GetDbUtils;
 import com.hydrology.common.utils.db.ResultEntity;
 import com.hydrology.common.utils.poi.ExcelExportUtils;
@@ -41,6 +42,7 @@ public class DatasetService {
     public static final String DS_PREFIX = "ds_";
     private static final Pattern IDENTIFIER = Pattern.compile("^[a-zA-Z0-9_]+$");
     private static final Set<String> JOIN_TYPES = new HashSet<>(Arrays.asList("LEFT", "INNER"));
+    private static final Set<String> RESTRICTED_TABLES = new HashSet<>(Arrays.asList("sys_", "qrtz_", "gen_"));
     private static final String[] POWER_COLUMNS = {"station_f_id", "power_station_id"};
 
     @Autowired
@@ -296,7 +298,8 @@ public class DatasetService {
                 if (!mainCols.containsKey(pc)) {
                     continue;
                 }
-                boolean exists = cols.stream().anyMatch(c -> pc.equals(c.getStr("alias")));
+                boolean exists = cols.stream().anyMatch(c -> pc.equals(c.getStr("alias"))
+                        && mainTable.equals(c.getStr("source_table")));
                 if (!exists) {
                     cols.add(Entity.create().set("source_table", mainTable).set("source_column", pc)
                             .set("alias", pc).set("column_comment", pc).set("dict_type", "")
@@ -309,6 +312,12 @@ public class DatasetService {
     private Map<String, Entity> requireRegistered(String table) {
         if (StrUtil.isBlank(table) || isDataset(table)) {
             throw new ServiceException("非法主表/关联表：" + table);
+        }
+        // 与单表 curd 一致：受限表仅 admin 可作为数据集来源
+        for (String restricted : RESTRICTED_TABLES) {
+            if (table.startsWith(restricted) && !SecurityUtils.isAdmin()) {
+                throw new ServiceException("您无权操作该表数据", HttpStatus.FORBIDDEN);
+            }
         }
         Map<String, Entity> cols = redisCache.getCacheMap(RedisConstants.COLUMN_PREFIX + table, Entity.class);
         if (cols == null || cols.isEmpty()) {
@@ -328,6 +337,12 @@ public class DatasetService {
         Entity exist = db.queryOne("select dataset_id from gen_dataset where dataset_name = ?", ds.getStr("dataset_name"));
         if (exist != null && !exist.getLong("dataset_id").equals(id)) {
             throw new ServiceException("数据集名已存在：" + ds.getStr("dataset_name"));
+        }
+        if (id != null) {
+            Entity old = getDataset(id);
+            if (old != null && !old.getStr("dataset_name").equals(ds.getStr("dataset_name"))) {
+                throw new ServiceException("数据集不支持改名，请删除后重建");
+            }
         }
         db.tx(txDb -> {
             if (id == null) {
@@ -369,15 +384,20 @@ public class DatasetService {
     public void deleteDataset(Long[] ids) {
         Db db = GetDbUtils.getDb();
         List<String> names = new ArrayList<>();
-        for (Long id : ids) {
-            Entity ds = getDataset(id);
-            if (ds != null) {
-                names.add(ds.getStr("dataset_name"));
-            }
-            db.del(Entity.create("gen_dataset_column").set("dataset_id", id));
-            db.del(Entity.create("gen_dataset").set("dataset_id", id));
+        try {
+            db.tx(txDb -> {
+                for (Long id : ids) {
+                    Entity ds = txDb.queryOne("select * from gen_dataset where dataset_id = ?", id);
+                    if (ds != null) {
+                        names.add(ds.getStr("dataset_name"));
+                    }
+                    txDb.del(Entity.create("gen_dataset_column").set("dataset_id", id));
+                    txDb.del(Entity.create("gen_dataset").set("dataset_id", id));
+                }
+            });
+        } finally {
+            names.forEach(this::removeCache);
         }
-        names.forEach(this::removeCache);
     }
 
     /**

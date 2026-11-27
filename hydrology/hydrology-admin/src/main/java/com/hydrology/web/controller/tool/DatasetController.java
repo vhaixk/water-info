@@ -8,6 +8,7 @@ import com.hydrology.common.core.domain.AjaxResult;
 import com.hydrology.common.core.page.TableDataInfo;
 import com.hydrology.common.core.service.DatasetService;
 import com.hydrology.common.enums.BusinessType;
+import com.hydrology.common.exception.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -88,18 +89,26 @@ public class DatasetController extends BaseController {
 
     @SuppressWarnings("unchecked")
     private Entity toDataset(Entity body) {
+        Object d = body.get("dataset");
+        if (!(d instanceof Map)) {
+            throw new ServiceException("请求体缺少 dataset 对象");
+        }
         Entity ds = Entity.create();
-        ds.putAll((Map<String, Object>) body.get("dataset"));
+        ds.putAll((Map<String, Object>) d);
         return ds;
     }
 
     @SuppressWarnings("unchecked")
     private List<Entity> toColumns(Entity body) {
-        return ((List<Map<String, Object>>) body.get("columns")).stream()
+        Object c = body.get("columns");
+        if (!(c instanceof List)) {
+            throw new ServiceException("请求体缺少 columns 数组");
+        }
+        return ((List<Map<String, Object>>) c).stream()
                 .map(m -> {
-                    Entity c = Entity.create();
-                    c.putAll(m);
-                    return c;
+                    Entity col = Entity.create();
+                    col.putAll(m);
+                    return col;
                 }).collect(Collectors.toList());
     }
 }
