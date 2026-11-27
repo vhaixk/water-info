@@ -70,7 +70,7 @@ services:
       - water-info-net
 
   nginx:
-    image: nginx:latest
+    image: nginx:1.30.7
     container_name: water-info-nginx
     ports:
       - "50060:80"  # 宿主机端口:容器端口

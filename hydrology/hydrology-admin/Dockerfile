@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM eclipse-temurin:17.0.21.1_2-jdk
 
 WORKDIR /project
 
@@ -15,12 +15,9 @@ ENV JAVA_OPTS="-Dlogging.file=${LOG_FILE} \
 -Xms1g -Xmx1g \
 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=384M \
 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/my-app/logs \
--XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=100M \
--Xloggc:/opt/my-app/logs/gc.log \
--XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps \
+-Xlog:gc*,gc+heap=debug,gc+age=trace,gc+ref=debug:file=/opt/my-app/logs/gc.log:time,uptime,level,tags:filecount=5,filesize=100M \
 -XX:NewRatio=2 -XX:SurvivorRatio=8 \
--XX:+UseParallelGC -XX:+UseParallelOldGC \
--XX:+PrintHeapAtGC -XX:+PrintTenuringDistribution -XX:+PrintReferenceGC \
+-XX:+UseParallelGC \
 -XX:+DisableExplicitGC"
 
 EXPOSE 18890
