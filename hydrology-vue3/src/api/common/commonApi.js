@@ -40,7 +40,8 @@ export const removeData = (tableName, data= {}) => {
 export const exportData = (tableName, exportName, data= {}) => {
     if (!data['tableName']) data['tableName'] = tableName;
     return request({
-        url: `/curd/${tableName}-export`,
+        // exportName 是后端 @RequestParam，必须以查询参数传递
+        url: `/curd/${tableName}-export?exportName=${encodeURIComponent(exportName || '')}`,
         data: data,
         method: 'post'
     })

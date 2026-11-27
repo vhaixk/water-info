@@ -38,7 +38,7 @@
                      @keyup.enter="getColumnData"
           >
             <el-option
-                v-for="item in Object.values(dicColumnConfig[item.column_name])"
+                v-for="item in Object.values(dicColumnConfig[item.column_name] || {})"
                 :key="item.value"
                 :label="item.label"
                 :value="item.value"
@@ -50,7 +50,7 @@
           <el-button :loading="loading" icon="Search" type="primary" @click="getColumnData">查询</el-button>
           <el-button :loading="loading" icon="Refresh" type="info" @click="resetTableData">重置</el-button>
           <el-button v-if="tableConfig.toolbar.add" icon="Plus" type="success" @click="handleEdit">新增</el-button>
-          <el-button v-if="tableConfig.toolbar.delete" icon="Delete" type="danger" @click="handleDelete">删除
+          <el-button v-if="tableConfig.toolbar.delete" icon="Delete" type="danger" @click="() => handleDelete()">删除
           </el-button>
           <el-button v-if="tableConfig.toolbar.export" :loading="exportLoading" icon="Document" type="success"
                      @click="handleExport">导出
@@ -215,7 +215,7 @@
       </el-footer>
     </el-main>
     <insert-or-update
-        ref="insertOrUpdate"
+        ref="editDialogRef"
         :columnConfig="sortColumnConfig"
         :dicColumnConfig="dicColumnConfig"
         :tableConfig="tableConfig"
@@ -230,15 +230,17 @@
 
 import commonApi from "@/api/common/commonApi.js";
 import dayjs from 'dayjs';
-import {watch} from "vue";
-import InsertOrUpdate from "@/components/TableComponent/InsertOrUpdate.vue";
+import {watch, defineAsyncComponent} from "vue";
+// 编辑弹窗异步加载，避免其依赖（上传/预览等）进入表格主 chunk
+const InsertOrUpdate = defineAsyncComponent(() => import("@/components/TableComponent/InsertOrUpdate.vue"));
 import {ElMessage, ElMessageBox} from "element-plus";
 import CommonApi from "@/api/common/commonApi.js";
 import CommonUtils from "@/api/common/commonUtils.js";
 
 const {proxy} = getCurrentInstance()
 
-const insertOrUpdate = ref({})
+// 模板 ref 名避免与组件名 InsertOrUpdate 驼峰冲突，否则 Vue 会把 ref 当组件解析
+const editDialogRef = ref({})
 const table = ref({})
 
 const loading = ref(false);
@@ -248,7 +250,7 @@ const emit = defineEmits(['removeOver'])
 const props = defineProps({
   tableConfig: {
     type: Object,
-    default: {
+    default: () => ({
       tableName: "",
       exportName: "",
       maxHeight: "",
@@ -262,7 +264,7 @@ const props = defineProps({
         update: true,
         delete: true,
       },
-    }
+    })
   },
 })
 
@@ -276,14 +278,6 @@ const refreshAll = (async () => {
   await refreshDicCache()
   await getColumnData()
 })
-const calculatedMaxHeight = () => {
-  // 获取窗口内部高度
-  const windowHeight = window.innerHeight;
-  // 计算可用高度（减去头部和底部高度）
-  const availableHeight = windowHeight - this.headerHeight - this.footerHeight;
-  // 设置一个最小值或最大值，防止极端情况
-  return Math.max(availableHeight, 400); // 至少显示 400px 高度
-}
 const formatImagePreview = (value) => {
   return value.split(',').map(v => import.meta.env.VITE_APP_BASE_API + v)
 }
@@ -330,8 +324,7 @@ const getDateType = (item) => {
 }
 
 const handleEdit = (index, row) => {
-  insertOrUpdate.value.openDialog(row)
-  // console.log(index, row)
+  editDialogRef.value.openDialog(row)
 }
 
 
@@ -360,7 +353,6 @@ const getColumnConfig = async () => {
   const {data} = await commonApi.getColumnConfig(props.tableConfig.tableName)
   columnMapConfig.value = data
   const columnArray = Object.values(data)
-  await refreshDicCache()
   sortColumnConfig.value = columnArray.sort((item1, item2) => item1.sort - item2.sort)
   searchColumnConfig.value = sortColumnConfig.value.filter(item => item.is_query === '1')
   idColumnConfig.value = sortColumnConfig.value.filter(item => item.is_pk === '1')
@@ -387,29 +379,25 @@ const getColumnConfig = async () => {
   assignWhereFrom.value = JSON.stringify(whereFrom.value)
 }
 
-// 刷新字典
+// 刷新字典（各列并发，初始化时由 refreshAll 统一调用一次）
 const refreshDicCache = async () => {
-  const columnArray = Object.values(columnMapConfig.value)
-  for (let columnItem of columnArray) {
-    if (!columnItem.dict_type) continue
+  const columnArray = Object.values(columnMapConfig.value).filter(item => item.dict_type)
+  await Promise.all(columnArray.map(async (columnItem) => {
     dicColumnConfig.value[columnItem.column_name] = []
-    const data = await proxy.useDict(columnItem.dict_type)[columnItem.dict_type]
-    if (data.value.length > 0) {
+    const data = proxy.useDict(columnItem.dict_type)[columnItem.dict_type]
+    const buildDicMap = (dicData) => {
       const dicMap = {}
-      for (let dicDatum of data.value) {
+      for (let dicDatum of dicData) {
         dicMap[dicDatum.value] = dicDatum
       }
       dicColumnConfig.value[columnItem.column_name] = dicMap
-    } else {
-      watch(data, dicData => {
-        const dicMap = {}
-        for (let dicDatum of data.value) {
-          dicMap[dicDatum.value] = dicDatum
-        }
-        dicColumnConfig.value[columnItem.column_name] = dicMap
-      }, {deep: true})
     }
-  }
+    if (data.value.length > 0) {
+      buildDicMap(data.value)
+    } else {
+      watch(data, dicData => buildDicMap(dicData), {deep: true})
+    }
+  }))
 }
 
 const whereFrom = ref({
@@ -426,17 +414,19 @@ const assignWhereFrom = ref({})
 // 获取数据
 const getColumnData = async () => {
   loading.value = true
-  whereFrom.value.tableName = props.tableConfig.tableName
-  whereFrom.value.uid = props.tableConfig.token
-  if (props.tableConfig.whereFromColumns) {
-    whereFrom.value.columns = Object.assign({}, whereFrom.value.columns, props.tableConfig.whereFromColumns)
+  try {
+    whereFrom.value.tableName = props.tableConfig.tableName
+    if (props.tableConfig.whereFromColumns) {
+      whereFrom.value.columns = Object.assign({}, whereFrom.value.columns, props.tableConfig.whereFromColumns)
+    }
+    const {data} = await commonApi.getColumnData(props.tableConfig.tableName, whereFrom.value)
+    tableData.value = data.dataList
+    whereFrom.value.page = data.page
+    whereFrom.value.pageSize = data.pageSize
+    whereFrom.value.total = data.total
+  } finally {
+    loading.value = false
   }
-  const {data} = await commonApi.getColumnData(props.tableConfig.tableName, whereFrom.value)
-  tableData.value = data.dataList
-  whereFrom.value.page = data.page
-  whereFrom.value.pageSize = data.pageSize
-  whereFrom.value.total = data.total
-  loading.value = false
 }
 
 const resetTableData = async () => {
@@ -446,37 +436,35 @@ const resetTableData = async () => {
 
 const handleExport = async () => {
   exportLoading.value = true
-  const exportName = props.tableConfig.exportName + '-' + dayjs().format('YYYYMMDDHHmmss')
-  const data = await commonApi.exportData(
-      props.tableConfig.tableName,
-      exportName,
-      {
-        ...whereFrom.value,
-        page: 0,
-        pageSize: 100000
-      }
-  )
-  if (data.code === 200) {
-    ElMessage({message: `导出成功`, type: 'success', duration: 2 * 1000})
-    await CommonUtils.downloadFile(data.data, exportName + '.xlsx')
-  } else {
-    ElMessage({message: `导出失败`, type: 'error', duration: 2 * 1000})
+  try {
+    const exportName = props.tableConfig.exportName + '-' + dayjs().format('YYYYMMDDHHmmss')
+    // 导出行数上限由服务端控制，不再传递 page/pageSize
+    const data = await commonApi.exportData(
+        props.tableConfig.tableName,
+        exportName,
+        {...whereFrom.value}
+    )
+    if (data.code === 200) {
+      ElMessage({message: `导出成功`, type: 'success', duration: 2 * 1000})
+      await CommonUtils.downloadFile(data.data, exportName + '.xlsx')
+    }
+  } finally {
+    exportLoading.value = false
   }
-  exportLoading.value = false
 }
 
 
 const handleDelete = (row) => {
-  const multipleSelection = table.value.getSelectionRows()
+  const multipleSelection = table.value.getSelectionRows() || []
 
-  if (!row && multipleSelection.value.length === 0) {
+  if (!row && multipleSelection.length === 0) {
     ElMessage({message: `请选择数据后进行操作`, type: 'info', duration: 2 * 1000})
     return
   }
 
   const rows = []
   const params = {}
-  if (row && !row.pointerType) {
+  if (row) {
     rows.push(row);
   } else {
     rows.push(...multipleSelection)

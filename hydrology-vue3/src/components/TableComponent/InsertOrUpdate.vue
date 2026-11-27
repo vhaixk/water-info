@@ -189,33 +189,7 @@
 
     </el-dialog>
 
-    <el-image-viewer
-        v-if="previewFile.imgDialogVisible"
-        :url-list="[previewFile.dialogImageUrl]"
-        show-progress
-        @close="previewFile.imgDialogVisible = false"
-    />
-    <el-dialog
-        v-model="previewFile.officeVisible"
-        :loading="previewFile.loading"
-        :title="previewFile.title"
-        align-center
-        class="custom-dragging-style"
-        destroy-on-close
-        draggable
-        style="height: 85vh"
-        width="70%"
-    >
-      <div style="flex: 1;overflow: auto;height: 80vh;width: 100%">
-        <vue-office-pdf v-if="previewFile.pdfUrl" :@endered="previewFile.loading = false" :src="previewFile.pdfUrl"/>
-        <vue-office-docx v-if="previewFile.docxUrl" :src="previewFile.docxUrl "
-                         @rendered="previewFile.loading = false"/>
-        <vue-office-pptx v-if="previewFile.pptxUrl" :src="previewFile.pptxUrl "
-                         @rendered="previewFile.loading = false"/>
-        <vue-office-excel v-if="previewFile.excelUrl" :src="previewFile.excelUrl "
-                          @rendered="previewFile.loading = false"/>
-      </div>
-    </el-dialog>
+    <file-preview v-if="previewFile" :file="previewFile" @close="previewFile = null"/>
   </div>
 </template>
 
@@ -223,12 +197,9 @@
 <script setup>
 
 import CommonApi, {insertOrUpdate} from "@/api/common/commonApi.js";
-import VueOfficePdf from '@vue-office/pdf'
-import VueOfficeDocx from '@vue-office/docx'
-import VueOfficePptx from '@vue-office/pptx'
-import VueOfficeExcel from '@vue-office/excel'
-import '@vue-office/docx/lib/index.css'
-import '@vue-office/excel/lib/index.css'
+import {defineAsyncComponent} from "vue";
+// 预览组件异步加载，vue-office 重依赖不进入表格主 chunk
+const FilePreview = defineAsyncComponent(() => import("@/components/TableComponent/FilePreview.vue"));
 
 import {ElMessage} from "element-plus";
 import {
@@ -248,17 +219,7 @@ const emit = defineEmits(['saveOver','refresh'])
 const viewFile = ref({})
 import cloneDeep from "lodash/cloneDeep";
 
-const previewFile = ref({
-  dialogImageUrl: '',
-  imgDialogVisible: false,
-  pdfUrl: '',
-  excelUrl: '',
-  docxUrl: '',
-  pptxUrl: '',
-  officeVisible: false,
-  title: ''
-
-})
+const previewFile = ref(null)
 
 const location = CommonUtils.getLocation()
 
@@ -285,22 +246,22 @@ const openDialog = (row) => {
   viewFile.value = {}
   rowData.value = row ? cloneDeep(row) : {}
   for (let column of props.columnConfig) {
-    if (column.edit_type === 'select' && rowData.value[column.column_name]) {
-      rowData.value[column.column_name] = String(rowData.value[column.column_name])
-    }
-    if (column.edit_type === 'selectMore' || column.edit_type === 'checkbox') {
-      if (row) {
-        rowData.value[column.column_name] = rowData.value[column.column_name] ? rowData.value[column.column_name].split(',') :[]
-      } else {
-        rowData.value[column.column_name] = []
-      }
-    }
+    const columnName = column.column_name
+    // 先置默认值，再做类型初始化，避免多选/上传初始值被覆盖
     if (!row) {
-      rowData.value[column.column_name] = null
+      rowData.value[columnName] = null
     }
-    if (column.edit_type.indexOf('Upload') > -1 && rowData.value[column.column_name]) {
-      viewFile.value[column.column_name] =
-          rowData.value[column.column_name]
+    if (column.edit_type === 'select' && rowData.value[columnName]) {
+      rowData.value[columnName] = String(rowData.value[columnName])
+    }
+    if (['selectMore', 'checkbox', 'checkBox'].includes(column.edit_type)) {
+      rowData.value[columnName] = row
+          ? (rowData.value[columnName] ? String(rowData.value[columnName]).split(',') : [])
+          : []
+    }
+    if (column.edit_type.indexOf('Upload') > -1 && rowData.value[columnName]) {
+      viewFile.value[columnName] =
+          String(rowData.value[columnName])
               .split(",")
               .map((item) => {
                 return {
@@ -316,18 +277,20 @@ const openDialog = (row) => {
 
 
 const fileUpload = async (uploadFile, uploadFiles, item) => {
-  const view = viewFile.value[item.column_name]
+  const view = viewFile.value[item.column_name] || []
 
   if (item.edit_type.indexOf('image') > -1) {
     if (!["bmp", "gif", "jpg", "jpeg", "png"].includes(CommonUtils.getSuffixName(uploadFile.name).toLowerCase())) {
       viewFile.value[item.column_name] = view.filter(item => item.uid !== uploadFile.uid)
       ElMessage({message: `不允许上传非图片文件`, type: 'error', duration: 2 * 1000})
+      return
     }
   }
 
   if (uploadFile.name.includes('@') || uploadFile.name.includes('/') || uploadFile.name.includes('#')) {
     viewFile.value[item.column_name] = view.filter(item => item.uid !== uploadFile.uid)
     ElMessage({message: `已过滤非法文件名称的文件`, type: 'error', duration: 2 * 1000})
+    return
   }
 
   const formData = new FormData();
@@ -357,41 +320,13 @@ const removeFile = (file, columnName) => {
   viewFile.value[columnName] = fs
 }
 const handledPreview = (uploadFile) => {
-
-  previewFile.value.docxUrl = ''
-  previewFile.value.pdfUrl = ''
-  previewFile.value.excelUrl = ''
-  previewFile.value.pptxUrl = ''
-  previewFile.value.title = uploadFile.name
-
   const suffix = CommonUtils.getSuffixName(uploadFile.name).toLowerCase()
-  if (["bmp", "gif", "jpg", "jpeg", "png"].includes(suffix)) {
-    previewFile.value.dialogImageUrl = uploadFile.url
-    previewFile.value.imgDialogVisible = true
+  const previewable = ["bmp", "gif", "jpg", "jpeg", "png", "doc", "docx", "pdf", "xls", "xlsx", "ppt", "pptx"]
+  if (!previewable.includes(suffix)) {
+    CommonUtils.downloadFile(uploadFile.profilePath, uploadFile.name)
+    return
   }
-
-  let flag = false
-  if (["doc", "docx"].includes(suffix)) {
-    previewFile.value.docxUrl = uploadFile.url
-    flag = true
-  }
-  if (["pdf"].includes(suffix)) {
-    previewFile.value.pdfUrl = uploadFile.url
-    flag = true
-  }
-  if (["xls", "xlsx"].includes(suffix)) {
-    previewFile.value.excelUrl = uploadFile.url
-    flag = true
-  }
-  if (["pptx", "ppt"].includes(suffix)) {
-    previewFile.value.pptxUrl = uploadFile.url
-    flag = true
-  }
-
-  previewFile.value.loading = flag
-  previewFile.value.officeVisible = flag
-
-  if (!flag) CommonUtils.downloadFile(uploadFile.profilePath, uploadFile.name)
+  previewFile.value = uploadFile
 }
 
 const submitForm = () => {
@@ -402,31 +337,33 @@ const submitForm = () => {
       return
     }
     loading.value = true
-    const saveRowData = {tableName: props.tableConfig.tableName}
-    for (let column of props.columnConfig) {
-      if (column.edit_type === 'selectMore' || column.edit_type === 'checkbox') {
-        saveRowData[column.column_name] = rowData.value[column.column_name]?.join(',')
-      } else {
-        saveRowData[column.column_name] = rowData.value[column.column_name]
+    try {
+      const saveRowData = {tableName: props.tableConfig.tableName}
+      for (let column of props.columnConfig) {
+        // 只提交可编辑列与主键，避免将禁止编辑的字段一并提交（mass-assignment）
+        if (column.edit_list !== '1' && column.is_pk !== '1') continue
+        if (['selectMore', 'checkbox', 'checkBox'].includes(column.edit_type)) {
+          saveRowData[column.column_name] = rowData.value[column.column_name]?.join(',')
+        } else {
+          saveRowData[column.column_name] = rowData.value[column.column_name]
+        }
       }
-    }
-    for (let columnName of Object.keys(viewFile.value)) {
-      const uploadValue = viewFile.value[columnName].map((item) => item.profilePath).join(',')
-      saveRowData[columnName] = uploadValue
-      rowData.value[columnName] = uploadValue
-    }
-    const data = await insertOrUpdate(props.tableConfig.tableName, saveRowData)
-    if (data.code === 200) {
-      ElMessage({message: `已成功${title.value} ${data.data} 条数据！`, type: 'success', duration: 2 * 1000})
+      for (let columnName of Object.keys(viewFile.value)) {
+        const uploadValue = viewFile.value[columnName].map((item) => item.profilePath).join(',')
+        saveRowData[columnName] = uploadValue
+        rowData.value[columnName] = uploadValue
+      }
+      const data = await insertOrUpdate(props.tableConfig.tableName, saveRowData)
+      if (data.code === 200) {
+        ElMessage({message: `已成功${title.value} ${data.data} 条数据！`, type: 'success', duration: 2 * 1000})
 
-      emit('refresh')
-      emit('saveOver',saveRowData)
-      visible.value = false
-    } else {
-      ElMessage({message: `${title.value}数据失败`, type: 'error', duration: 2 * 1000})
+        emit('refresh')
+        emit('saveOver',saveRowData)
+        visible.value = false
+      }
+    } finally {
+      loading.value = false
     }
-
-    loading.value = false
   })
 }
 

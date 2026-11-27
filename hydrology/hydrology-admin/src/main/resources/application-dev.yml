@@ -41,6 +41,11 @@ socket:
 server:
   # 服务器的HTTP端口，默认为8080
   port: 18890
+  # 响应压缩：数据统计等接口 JSON 可达百 MB，压缩后传输量降一个数量级
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,application/javascript
+    min-response-size: 10240
   servlet:
     # 应用的访问路径
     context-path: /

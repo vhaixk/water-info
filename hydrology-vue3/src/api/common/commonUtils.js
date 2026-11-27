@@ -1,11 +1,12 @@
 import request from "@/utils/request.js";
+import {ElMessage} from "element-plus";
 
 
-export const downloadFile = async (url,fileName) => {
+export const downloadFile = async (url, fileName) => {
     try {
-        const res = await request.post(url, {}, {
-            responseType: 'blob',
-            method: 'post'
+        // /profile 静态资源仅支持 GET，POST 会被资源处理器拒绝
+        const res = await request.get(url, {
+            responseType: 'blob'
         });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([res]));
@@ -17,6 +18,7 @@ export const downloadFile = async (url,fileName) => {
         URL.revokeObjectURL(link.href);
     } catch (error) {
         console.error('下载失败', error);
+        ElMessage({message: '文件下载失败', type: 'error', duration: 3 * 1000});
     }
 };
 

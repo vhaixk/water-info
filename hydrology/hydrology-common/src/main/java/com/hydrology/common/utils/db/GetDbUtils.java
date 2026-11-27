@@ -9,9 +9,11 @@ import cn.hutool.core.util.*;
 import cn.hutool.db.Db;
 import cn.hutool.db.Entity;
 import cn.hutool.extra.spring.SpringUtil;
+import com.hydrology.common.constant.HttpStatus;
 import com.hydrology.common.constant.RedisConstants;
 import com.hydrology.common.core.entity.QueryEntity;
 import com.hydrology.common.core.redis.RedisCache;
+import com.hydrology.common.exception.ServiceException;
 import com.hydrology.common.utils.CacheUtils;
 import com.hydrology.common.utils.SecurityUtils;
 import com.hydrology.common.utils.WaterDownloadCacheUtils;
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,14 +38,28 @@ public class GetDbUtils {
 
     public static String[] INVALID_CHARACTERS = new String[]{"select", "update", "delete", "insert"};
 
+    /** 单次查询/导出行数上限 */
+    public static final long MAX_PAGE_SIZE = 200_000L;
+
+    /** 表名/列名等 SQL 标识符合法性校验 */
+    private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[a-zA-Z0-9_]+$");
+
+    private static void checkTableName(String tableName) {
+        if (StrUtil.isBlank(tableName) || !IDENTIFIER_PATTERN.matcher(tableName).matches()) {
+            throw new ServiceException("非法表名：" + tableName, HttpStatus.FORBIDDEN);
+        }
+    }
+
     public static ResultEntity queryDataByEntity(QueryEntity queryEntity) {
         if (queryEntity == null) queryEntity = new QueryEntity();
 
-        // 获取分页参数，并设置默认值
-        Long page = queryEntity.getPage();
-        Long pageSize = queryEntity.getPageSize();
+        // 获取分页参数，并设置默认值与上限，防止空值 NPE 或任意 pageSize 拉取全表
+        long page = queryEntity.getPage() == null || queryEntity.getPage() < 1 ? 1L : queryEntity.getPage();
+        long pageSize = queryEntity.getPageSize() == null || queryEntity.getPageSize() < 1 ? 20L
+                : Math.min(queryEntity.getPageSize(), MAX_PAGE_SIZE);
+        queryEntity.setPage(page).setPageSize(pageSize);
         String tableName = queryEntity.getTableName();
-        checkValue(tableName);
+        checkTableName(tableName);
         RedisCache redisCache = SpringUtil.getBean(RedisCache.class);
         Map<String, Entity> columnConfigList = redisCache.getCacheMap(RedisConstants.COLUMN_PREFIX + tableName, Entity.class);
 
@@ -106,36 +123,42 @@ public class GetDbUtils {
     private static void checkPower(QueryEntity queryEntity) {
 
         String powerIds = SecurityUtils.getPowerIds();
+        if (StrUtil.isBlank(powerIds)) return;
         String systemId = SecurityUtils.getSystemId();
-        if (StrUtil.isBlank(powerIds) || StrUtil.isBlank(systemId)) return;
+        if (StrUtil.isBlank(systemId)) return;
         String tableName = queryEntity.getTableName();
 
-        boolean b = StrUtil.containsIgnoreCase(tableName, "hy_");
-        if (b) {
-            QueryEntity.Column stationFId = queryEntity.getColumns().get("station_f_id");
-            if (ObjectUtil.isEmpty(stationFId) || ObjectUtil.isEmpty(stationFId.getColumnValue())) {
-                queryEntity.getColumns()
-                        .put("station_f_id",
-                                QueryEntity.Column.getOne()
-                                        .setWhereType("IN")
-                                        .setColumnName("station_f_id")
-                                        .setGroupId("station_f_id")
-                                        .setColumnValue(new ArrayList<>(SecurityUtils.getFStations().keySet()))
-                        );
-            }
-            QueryEntity.Column powerStationId = queryEntity.getColumns().get("power_station_id");
-            if (ObjectUtil.isEmpty(powerStationId) || ObjectUtil.isEmpty(powerStationId.getColumnValue())) {
-                queryEntity.getColumns()
-                        .put("power_station_id",
-                                QueryEntity.Column.getOne()
-                                        .setWhereType("IN")
-                                        .setColumnName("power_station_id")
-                                        .setGroupId("power_station_id")
-                                        .setColumnValue(Arrays.asList(powerIds.split(",")))
-                        );
-            }
-
+        if (StrUtil.containsIgnoreCase(tableName, "hy_")) {
+            // 用户传入的站点条件必须与授权范围求交集，防止自选站点绕过行级数据权限
+            applyPowerColumn(queryEntity, "station_f_id", new ArrayList<>(SecurityUtils.getFStations().keySet()));
+            applyPowerColumn(queryEntity, "power_station_id", Arrays.asList(powerIds.split(",")));
         }
+    }
+
+    private static void applyPowerColumn(QueryEntity queryEntity, String columnName, List<String> allowed) {
+        if (allowed.isEmpty()) {
+            throw new ServiceException("您无权访问该站点数据", HttpStatus.FORBIDDEN);
+        }
+        QueryEntity.Column column = queryEntity.getColumns().get(columnName);
+        List<String> finalValues = allowed;
+        if (column != null && ObjectUtil.isNotEmpty(column.getColumnValue())) {
+            Object value = column.getColumnValue();
+            List<String> requested = value instanceof List
+                    ? ((List<?>) value).stream().map(String::valueOf).collect(Collectors.toList())
+                    : Collections.singletonList(String.valueOf(value));
+            finalValues = requested.stream().filter(allowed::contains).distinct().collect(Collectors.toList());
+            if (finalValues.isEmpty()) {
+                throw new ServiceException("您无权访问该站点数据", HttpStatus.FORBIDDEN);
+            }
+        }
+        queryEntity.getColumns()
+                .put(columnName,
+                        QueryEntity.Column.getOne()
+                                .setWhereType("IN")
+                                .setColumnName(columnName)
+                                .setGroupId(columnName)
+                                .setColumnValue(finalValues)
+                );
     }
 
     public static Entity queryOneDataByEntity(QueryEntity queryEntity) {
@@ -149,6 +172,9 @@ public class GetDbUtils {
     @SneakyThrows
     public static List<Entity> queryNewDataByGroup(Entity entity) {
         checkValue(entity);
+        checkTableName(entity.getStr("tableName"));
+        checkTableName(entity.getStr("partitionField"));
+        checkTableName(entity.getStr("orderField"));
         String sql = "SELECT\n" +
                 "  *\n" + "FROM\n" +
                 "  (SELECT *, ROW_NUMBER() OVER (PARTITION BY {partitionField} ORDER BY {orderField} DESC) AS rn FROM {tableName} where monitor_station_time > ?) t\n" +
@@ -289,8 +315,8 @@ public class GetDbUtils {
     private static void checkValue(Object value) {
         if (value instanceof List) {
             ((List<?>) value).forEach(item -> {
-                if (ArrayUtil.contains(INVALID_CHARACTERS, value)) {
-                    throw new RuntimeException("含有违规值！" + value);
+                if (item != null && ArrayUtil.contains(INVALID_CHARACTERS, item.toString())) {
+                    throw new RuntimeException("含有违规值！" + item);
                 }
             });
         } else {
@@ -351,7 +377,7 @@ public class GetDbUtils {
         List<String> whereStr = new ArrayList<>();
         List<Object> deleteValues = new ArrayList<>();
 
-        checkValue(tableName);
+        checkTableName(tableName);
         for (String key : keys) {
             Object value = entity.get(key);
             String javaType = columnList.get(key).getStr("java_type");
@@ -385,6 +411,7 @@ public class GetDbUtils {
             log.error("数据集里面没有数据！");
             return 0;
         }
+        checkTableName(tableName);
         if (entities.size() > 1000) {
             final int BATCH_SIZE = 1000;
             long totalAffectedRows = 0;
@@ -434,45 +461,50 @@ public class GetDbUtils {
                 String.join("= ? ,", keys),
                 String.join("= ? and ", pkStringList)
         );
-        int finalSize = 0;
+        int[] finalSize = {0};
         try {
-            if (!insertObjects.isEmpty()) {
-                log.info("batch insert sql: {}", insertSql);
-                log.info("batch insert size ===> {}", insertObjects.size());
-                db.executeBatch(insertSql, insertObjects);
-                finalSize += insertObjects.size();
-            }
-            if (!updateObjects.isEmpty()) {
-                log.info("batch update sql ===> {}", updateSql);
-                log.info("batch update size ===> {}", updateObjects.size());
-                db.executeBatch(updateSql, updateObjects);
-                finalSize += updateObjects.size();
-
-            }
+            // 插入与更新在同一事务内，避免部分成功部分失败
+            db.tx(txDb -> {
+                if (!insertObjects.isEmpty()) {
+                    log.info("batch insert sql: {}", insertSql);
+                    log.info("batch insert size ===> {}", insertObjects.size());
+                    txDb.executeBatch(insertSql, insertObjects);
+                    finalSize[0] += insertObjects.size();
+                }
+                if (!updateObjects.isEmpty()) {
+                    log.info("batch update sql ===> {}", updateSql);
+                    log.info("batch update size ===> {}", updateObjects.size());
+                    txDb.executeBatch(updateSql, updateObjects);
+                    finalSize[0] += updateObjects.size();
+                }
+            });
             String refreshCache = redisCache.getCacheMapValue(RedisConstants.TABLE_PREFIX + tableName, "refresh_cache");
-            if ((checkDic || "1".equals(refreshCache)) && finalSize > 0) {
+            if ((checkDic || "1".equals(refreshCache)) && finalSize[0] > 0) {
                 String powerIds = SecurityUtils.getPowerIds();
                 new Thread(() -> {
-                    checkDic(tableName);
+                    try {
+                        checkDic(tableName);
 
-                    // 只有水温监测系统会用到 暂时这么处理
-                    if (tableName.contains("_base_f_station")) {
-                        SecurityUtils.refreshFStation(tableName, powerIds);
+                        // 只有水温监测系统会用到 暂时这么处理
+                        if (tableName.contains("_base_f_station")) {
+                            SecurityUtils.refreshFStation(tableName, powerIds);
+                        }
+                        if (tableName.contains("_base_station")) {
+                            SecurityUtils.refreshStation(tableName, powerIds);
+                        }
+                        if (tableName.contains("_base_power_station")) {
+                            SecurityUtils.refreshStation(tableName, powerIds);
+                        }
+                    } catch (Exception e) {
+                        log.error("刷新表 {} 相关缓存失败", tableName, e);
                     }
-                    if (tableName.contains("_base_station")) {
-                        SecurityUtils.refreshStation(tableName, powerIds);
-                    }
-                    if (tableName.contains("_base_power_station")) {
-                        SecurityUtils.refreshStation(tableName, powerIds);
-                    }
-
                 }).start();
             }
             // 映射表增改后即时重建树/字典缓存，不依赖 refresh_cache 配置
-            if (finalSize > 0 && tableName.startsWith("hy_download_water_mapping_")) {
+            if (finalSize[0] > 0 && tableName.startsWith("hy_download_water_mapping_")) {
                 new Thread(() -> WaterDownloadCacheUtils.refreshMappingCache(tableName)).start();
             }
-            return finalSize;
+            return finalSize[0];
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -516,34 +548,39 @@ public class GetDbUtils {
         }
         String pkStrings = String.join(",", pkStringList);
         StringBuilder whereBuilder = new StringBuilder();
+        List<Object> pkParams = new ArrayList<>();
         for (String key : keyMap.keySet()) {
+            checkTableName(key);
             String javaType = pkCacheMap.get(key).getStr("java_type");
             List<String> stringValues = keyMap.get(key);
             if (stringValues.isEmpty()) {
                 continue;
             }
-            switch (javaType) {
-                case "String":
-                    whereBuilder.append(" and ").append(key).append(" IN ('").append(String.join("','", stringValues)).append("') ");
-                    break;
-                case "Long":
-                    whereBuilder.append(" and ").append(key).append(" IN (").append(String.join(",", stringValues)).append(") ");
-                    break;
-                case "Date":
-                    whereBuilder.append(" and ").append(StrUtil.format("{}", key))
-                            .append(" IN ('").append(String.join("','", stringValues)).append("') ");
-                    break;
-                default:
-                    throw new RuntimeException(StrUtil.format("未知主键类型，不能保存，表 = {}，字段 = {}", tableName, key));
+            // 主键值统一参数化绑定，防止拼接引入 SQL 注入
+            String placeholders = stringValues.stream().map(v -> "?").collect(Collectors.joining(","));
+            whereBuilder.append(" and ").append(key).append(" IN (").append(placeholders).append(") ");
+            for (String stringValue : stringValues) {
+                switch (javaType) {
+                    case "String":
+                        pkParams.add(stringValue);
+                        break;
+                    case "Long":
+                        pkParams.add(Long.valueOf(stringValue));
+                        break;
+                    case "Date":
+                        pkParams.add(DateUtil.parse(stringValue).toTimestamp());
+                        break;
+                    default:
+                        throw new RuntimeException(StrUtil.format("未知主键类型，不能保存，表 = {}，字段 = {}", tableName, key));
+                }
             }
-
         }
         if (whereBuilder.length() == 0) {
             return new ArrayList<>();
         }
         String finalQueryPkSql = StrUtil.format(queryPkSql, pkStrings, tableName, whereBuilder.toString());
         log.info("finalQueryPkSql: {}", finalQueryPkSql);
-        List<Entity> query = db.query(finalQueryPkSql);
+        List<Entity> query = db.query(finalQueryPkSql, pkParams.toArray());
         return query.stream()
                 .map(entity -> {
                     List<String> pkList = new ArrayList<>();

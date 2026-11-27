@@ -5,7 +5,7 @@
       align-center
       append-to-body
       destroy-on-close
-      width="72%"
+      width="80%"
   >
     <div class="curve-toolbar">
       <el-date-picker
@@ -26,16 +26,49 @@
       <el-button :disabled="rows.length === 0" icon="Download" style="margin-left: auto" type="success"
                  @click="handleExport">导出</el-button>
     </div>
-    <div v-loading="loading" class="curve-chart">
-      <e-chart-component v-if="rows.length > 0" :options="chartOptions"/>
-      <el-empty v-else-if="!loading" description="所选时间段内暂无数据"/>
-    </div>
+    <!-- 左表格右图：表格行分页限制 DOM，图表仍用全量数据 -->
+    <el-container style="height: 60vh; overflow: hidden">
+      <el-aside style="display: flex; flex-direction: column; overflow: hidden" width="40%">
+        <el-table
+            v-loading="loading"
+            :data="pagedRows"
+            border
+            height="100%"
+            scrollbar-always-on
+            stripe
+            style="width: 100%; flex: 1; min-height: 0"
+        >
+          <el-table-column align="center" label="监测时间" min-width="140">
+            <template #default="{row}">{{ formatTime(row[config.timeProp]) }}</template>
+          </el-table-column>
+          <el-table-column v-for="m in config.metrics" :key="m.prop" :label="m.label" :prop="m.prop"
+                           align="center" min-width="100"/>
+          <el-table-column v-for="l in config.referenceLines" :key="l.prop" :label="l.label" :prop="l.prop"
+                           align="center" min-width="100"/>
+        </el-table>
+        <el-pagination
+            v-model:current-page="page"
+            v-model:page-size="pageSize"
+            :page-sizes="[50, 100, 200]"
+            :total="rows.length"
+            background
+            layout="total, prev, pager, next"
+            size="small"
+            style="flex-shrink: 0; padding: 6px 0; justify-content: flex-end"
+        />
+      </el-aside>
+      <el-divider direction="vertical" style="height: 100%; margin: 0 10px"/>
+      <el-main style="padding: 0; overflow: hidden">
+        <e-chart-component v-if="rows.length > 0" :options="chartOptions" style="height: 100%; width: 100%"/>
+        <el-empty v-else-if="!loading" description="所选时间段内暂无数据"/>
+      </el-main>
+    </el-container>
   </el-dialog>
 </template>
 
 <script setup>
 import dayjs from 'dayjs';
-import {computed, ref} from 'vue';
+import {computed, ref, shallowRef} from 'vue';
 import EChartComponent from '@/views/tool/echart/eChartComponent.vue';
 import DateEnum from '@/views/tool/date/dateEnum.js';
 import {exportData} from '@/utils/exportTable.js';
@@ -43,9 +76,18 @@ import {exportData} from '@/utils/exportTable.js';
 const visible = ref(false)
 const loading = ref(false)
 const config = ref({metrics: [], referenceLines: []})
-const rows = ref([])
+// 浅层响应 + 行分页：长时间序列下限制 DOM 行数，图表仍用全量数据
+const rows = shallowRef([])
+const page = ref(1)
+const pageSize = ref(50)
+const pagedRows = computed(() => {
+  const start = (page.value - 1) * pageSize.value
+  return rows.value.slice(start, start + pageSize.value)
+})
 const dates = ref([])
 const activeMetric = ref('')
+
+const formatTime = (v) => v ? dayjs(v).format('YYYY-MM-DD HH:mm') : ''
 
 // config: {title, timeProp, metrics:[{prop,label}], defaultMetric, referenceLines, fetchRows(dates)}
 const open = async (cfg) => {
@@ -54,6 +96,7 @@ const open = async (cfg) => {
   dates.value = [dayjs().subtract(7, 'day').format('YYYY-MM-DD'), dayjs().add(1, 'day').format('YYYY-MM-DD')]
   activeMetric.value = cfg.defaultMetric || cfg.metrics[0]?.prop
   rows.value = []
+  page.value = 1
   visible.value = true
   await loadData()
 }
@@ -64,6 +107,7 @@ const loadData = async () => {
     const data = await config.value.fetchRows(dates.value)
     const timeProp = config.value.timeProp
     rows.value = (data || []).slice().sort((a, b) => dayjs(a[timeProp]).valueOf() - dayjs(b[timeProp]).valueOf())
+    page.value = 1
   } finally {
     loading.value = false
   }
@@ -165,9 +209,5 @@ defineExpose({open})
   display: flex;
   gap: 12px;
   margin-bottom: 12px;
-}
-
-.curve-chart {
-  height: 420px;
 }
 </style>
