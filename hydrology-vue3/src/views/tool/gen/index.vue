@@ -63,11 +63,12 @@
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
+        <div class="gen-table-wrap">
         <el-table ref="genRef" v-loading="loading" :data="tableList" :default-sort="defaultSort" border
                   highlight-current-row scrollbar-always-on show-overflow-tooltip stripe
                   @selection-change="handleSelectionChange"
                   @sort-change="handleSortChange"
-        style="height: 80vh">
+        height="100%">
           <el-table-column align="center" type="selection" width="55"></el-table-column>
           <el-table-column align="center" fixed="left" label="序号" type="index" width="50">
             <template #default="scope">
@@ -121,6 +122,7 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
         <pagination
             v-show="total>0"
             v-model:limit="queryParams.pageSize"
@@ -280,9 +282,20 @@ getList()
 
 <style lang="scss" scoped>
 /* 全局主题对 .el-tab-pane 直接 div 子元素强制 height:100%，
-   用单一滚动容器承接，避免按钮行/表格/分页被各自撑满 */
+   用单一容器承接：flex 满高布局，表格内部滚行，页面无滚动轴 */
 .gen-pane-scroll {
   height: 100%;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  > .el-form,
+  > .el-row,
+  > .pagination-container {
+    flex: none;
+  }
+}
+.gen-table-wrap {
+  flex: 1;
+  min-height: 0;
 }
 </style>
