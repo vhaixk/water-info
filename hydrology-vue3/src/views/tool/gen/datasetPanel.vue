@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="ds-pane-scroll">
     <el-form :inline="true">
       <el-form-item label="名称">
         <el-input v-model="query.datasetName" clearable style="width: 180px" @keyup.enter="getList"/>
@@ -217,3 +217,11 @@ function handleDelete(row) {
 }
 getList()
 </script>
+
+<style lang="scss" scoped>
+/* 承接全局主题的 pane 满高规则，内容超出时内部滚动 */
+.ds-pane-scroll {
+  height: 100%;
+  overflow: auto;
+}
+</style>

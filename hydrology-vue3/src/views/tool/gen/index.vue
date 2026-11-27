@@ -2,6 +2,7 @@
   <div class="app-container">
     <el-tabs v-model="activeTab">
       <el-tab-pane label="单表注册" name="table">
+        <div class="gen-pane-scroll">
         <el-form v-show="showSearch" ref="queryRef" :inline="true" :model="queryParams">
           <el-form-item label="表名称" prop="tableName">
             <el-input
@@ -127,6 +128,7 @@
             :total="total"
             @pagination="getList"
         />
+        </div>
       </el-tab-pane>
       <el-tab-pane label="关联数据集" name="dataset">
         <dataset-panel @preview="(name, comment) => tableInfo.openDialog(name, comment)"/>
@@ -275,3 +277,12 @@ function handleDelete(row) {
 
 getList()
 </script>
+
+<style lang="scss" scoped>
+/* 全局主题对 .el-tab-pane 直接 div 子元素强制 height:100%，
+   用单一滚动容器承接，避免按钮行/表格/分页被各自撑满 */
+.gen-pane-scroll {
+  height: 100%;
+  overflow: auto;
+}
+</style>
