@@ -301,6 +301,9 @@ public class DatasetService {
                 boolean exists = cols.stream().anyMatch(c -> pc.equals(c.getStr("alias"))
                         && mainTable.equals(c.getStr("source_table")));
                 if (!exists) {
+                    if (!aliases.add(pc)) {
+                        throw new ServiceException("输出列别名与系统权限列冲突：" + pc);
+                    }
                     cols.add(Entity.create().set("source_table", mainTable).set("source_column", pc)
                             .set("alias", pc).set("column_comment", pc).set("dict_type", "")
                             .set("is_show", "0").set("is_list", "0").set("sort", 999));
