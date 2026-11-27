@@ -26,6 +26,11 @@ system:
   waterDownloadProd: true
   waterDownloadUrl: http://127.0.0.1:18883
   waterDownloadToken: 1777542103
+  # 水质下载限速（秒）：站点访问频率过大会封禁 IP，只允许调大不允许调小
+  waterQualityIntervalMin: 30
+  waterQualityIntervalMax: 75
+  # 水质下载连续失败熔断阈值：达到后中止本轮，避免 IP 进黑名单
+  waterQualityCircuitBreakFailures: 5
 # 开发环境配置
 socket:
   port: 18861

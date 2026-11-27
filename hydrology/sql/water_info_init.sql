@@ -1275,6 +1275,21 @@ CREATE TABLE `hy_download_water_quality` (
   PRIMARY KEY (`wq_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC COMMENT='水质监测数据';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `hy_download_water_quality_fetch_log`
+-- 水质下载区域抓取台账：更新重启后据此补抓未完成区域（服务首次使用时也会自建）
+--
+
+CREATE TABLE IF NOT EXISTS `hy_download_water_quality_fetch_log` (
+  `fetch_date` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '抓取日期',
+  `area_id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '区域ID',
+  `area_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '区域名称',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'success/failed',
+  `message` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '失败原因',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`fetch_date`,`area_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC COMMENT='水质下载区域抓取台账（重启补偿用）';
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

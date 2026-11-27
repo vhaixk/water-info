@@ -78,6 +78,25 @@ public class SystemConfig {
 
     @Getter
     private static String waterDownloadToken;
+
+    /**
+     * 水质下载请求间隔下限（秒）：站点访问频率过大会封禁 IP，只允许调大不允许调小
+     */
+    @Getter
+    private static Integer waterQualityIntervalMin = 30;
+
+    /**
+     * 水质下载请求间隔上限（秒）：实际间隔在上下限间随机抖动
+     */
+    @Getter
+    private static Integer waterQualityIntervalMax = 75;
+
+    /**
+     * 水质下载熔断阈值：连续失败达到该次数中止本轮，避免持续请求导致 IP 进黑名单
+     */
+    @Getter
+    private static Integer waterQualityCircuitBreakFailures = 5;
+
     /**
      * 上传路径
      */
@@ -183,6 +202,18 @@ public class SystemConfig {
 
     public void setWaterDownloadToken(String waterDownloadToken) {
         SystemConfig.waterDownloadToken = waterDownloadToken;
+    }
+
+    public void setWaterQualityIntervalMin(Integer waterQualityIntervalMin) {
+        SystemConfig.waterQualityIntervalMin = waterQualityIntervalMin;
+    }
+
+    public void setWaterQualityIntervalMax(Integer waterQualityIntervalMax) {
+        SystemConfig.waterQualityIntervalMax = waterQualityIntervalMax;
+    }
+
+    public void setWaterQualityCircuitBreakFailures(Integer waterQualityCircuitBreakFailures) {
+        SystemConfig.waterQualityCircuitBreakFailures = waterQualityCircuitBreakFailures;
     }
 
     /**

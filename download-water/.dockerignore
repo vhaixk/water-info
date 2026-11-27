@@ -1,0 +1,7 @@
+save_images/
+__pycache__/
+.idea/
+.git/
+*.pyc
+*.png
+*.xlsx

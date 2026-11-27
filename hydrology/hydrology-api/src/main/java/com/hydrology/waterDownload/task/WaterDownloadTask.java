@@ -32,94 +32,149 @@ import java.util.stream.Collectors;
 @Component("waterDownloadTask")
 public class WaterDownloadTask {
 
+    // 站点键 -> 数据表：单站独立分发，失败可单独重发
+    private static final String[][] CRAWL_SITES = {
+            {"dj", "hy_download_water_dj"},
+            {"xsq", "hy_download_water_sk"},
+            {"ysq", "hy_download_water_yq"},
+    };
+    // Java 侧额外分发轮次（Python 服务内部每轮已自带重试）
+    private static final int MAX_ROUNDS = 2;
 
     public void runCrawl() {
         Boolean prod = SystemConfig.getWaterDownloadProd();
         if (!prod) return;
+        for (String[] site : CRAWL_SITES) {
+            this.crawlSite(site[0], site[1]);
+        }
+    }
+
+    /**
+     * 只爬指定数据表对应的站点（启动补偿用），避免重复抓当日已成功的站点
+     */
+    public void runCrawlTables(List<String> tables) {
+        Boolean prod = SystemConfig.getWaterDownloadProd();
+        if (!prod) return;
+        for (String[] site : CRAWL_SITES) {
+            if (tables.contains(site[1])) {
+                this.crawlSite(site[0], site[1]);
+            }
+        }
+    }
+
+    /**
+     * 单站爬取 + 入库：校验结果后按失败原因决定重发还是放弃。
+     * 可重试（空表/超时/网络/入库失败）退避后再发一轮；不可重试直接放弃。
+     */
+    private void crawlSite(String site, String tableName) {
+        for (int round = 1; round <= MAX_ROUNDS; round++) {
+            JSONObject task = this.submitAndWait(site);
+            if (task == null) {
+                // 提交/轮询失败多为服务或网络瞬时问题，允许再发一轮
+                log.error("站点 {} 爬取任务提交/轮询失败，第 {} 轮", site, round);
+            } else if ("done".equals(task.getStr("status"))) {
+                JSONObject result = task.getJSONObject("results").getJSONObject(site);
+                if (result != null && result.getInt("rows", 0) > 0
+                        && this.downloadAndSave(tableName, result.getStr("excel"), result.getStr("image"))) {
+                    return;
+                }
+                log.error("站点 {} 结果校验或入库失败，第 {} 轮", site, round);
+            } else {
+                JSONObject error = task.getJSONObject("error");
+                boolean retryable = error != null && error.getBool("retryable", false);
+                log.error("站点 {} 爬取失败 code={} retryable={}",
+                        site, error == null ? null : error.getStr("code"), retryable);
+                if (!retryable) return;
+            }
+            if (round < MAX_ROUNDS) {
+                try {
+                    Thread.sleep(60 * 1000L);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+        log.error("站点 {} 经 {} 轮仍失败，放弃", site, MAX_ROUNDS);
+    }
+
+    /**
+     * 提交单站异步任务并轮询至 done/failed；提交失败或超时返回 null。
+     */
+    private JSONObject submitAndWait(String site) {
         String waterDownloadUrl = SystemConfig.getWaterDownloadUrl();
         String token = SystemConfig.getWaterDownloadToken();
 
-        // /crawl/water 为异步接口：提交任务后轮询 /crawl/status 直至 done
         String taskId;
-        HttpRequest submit = HttpUtil.createPost(waterDownloadUrl + "/crawl/water")
-                .timeout(30000).body(JSONUtil.toJsonStr(Entity.create().set("token", token)));
+        HttpRequest submit = HttpUtil.createPost(waterDownloadUrl + "/crawl/site")
+                .timeout(30000).body(JSONUtil.toJsonStr(Entity.create().set("token", token).set("site", site)));
         try (HttpResponse response = submit.execute()) {
             taskId = JSONUtil.parseObj(response.body()).getStr("task_id");
         } catch (Exception e) {
-            log.error("提交爬取任务失败", e);
-            return;
+            log.error("提交站点 {} 爬取任务失败", site, e);
+            return null;
         }
         if (StrUtil.isBlank(taskId)) {
-            log.error("爬取任务提交未返回 task_id");
-            return;
+            log.error("站点 {} 爬取任务提交未返回 task_id", site);
+            return null;
         }
 
-        JSONObject results = null;
-        long deadline = System.currentTimeMillis() + 15 * 60 * 1000L;
+        // 生产服务器响应/OCR 可能较慢：单轮最坏 3 次尝试×(加载+稳定等待+截图)+退避，放宽到 30 分钟
+        long deadline = System.currentTimeMillis() + 30 * 60 * 1000L;
         while (System.currentTimeMillis() < deadline) {
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                return;
+                return null;
             }
             HttpRequest statusReq = HttpUtil.createPost(waterDownloadUrl + "/crawl/status")
                     .timeout(30000).body(JSONUtil.toJsonStr(Entity.create().set("token", token).set("task_id", taskId)));
             try (HttpResponse response = statusReq.execute()) {
-                JSONObject task = JSONUtil.parseObj(response.body());
-                if ("done".equals(task.getStr("status"))) {
-                    results = task.getJSONObject("results");
-                    break;
+                // Python 服务重启会丢失内存任务：404 时立即结束本轮，交由上层重新分发，不空等超时
+                if (response.getStatus() == 404) {
+                    log.error("爬取任务已丢失（下载服务可能重启） task={}", taskId);
+                    return null;
                 }
-                log.info("爬取任务进行中 task={} status={}", taskId, task.getStr("status"));
+                JSONObject task = JSONUtil.parseObj(response.body());
+                if (StrUtil.isNotBlank(task.getStr("error"))) {
+                    log.error("爬取状态查询返回错误 task={} error={}", taskId, task.getStr("error"));
+                    return null;
+                }
+                String status = task.getStr("status");
+                if ("done".equals(status) || "failed".equals(status)) {
+                    return task;
+                }
+                log.info("站点 {} 爬取进行中 task={} status={} attempts={}",
+                        site, taskId, status, task.getStr("attempts"));
             } catch (Exception e) {
                 log.error("查询爬取状态失败", e);
             }
         }
-        if (results == null) {
-            log.error("爬取任务超时或失败 task={}", taskId);
-            return;
-        }
-
-        // 大江大河 / 大型水库 / 雨水情，单站失败不影响其余
-        JSONObject djObject = results.getJSONObject("dj");
-        JSONObject xsqObject = results.getJSONObject("xsq");
-        JSONObject ysqObject = results.getJSONObject("ysq");
-        if (djObject != null) {
-            this.downloadAndSave("hy_download_water_dj", djObject.getStr("excel"), djObject.getStr("image"));
-        }
-        if (xsqObject != null) {
-            this.downloadAndSave("hy_download_water_sk", xsqObject.getStr("excel"), xsqObject.getStr("image"));
-        }
-        if (ysqObject != null) {
-            this.downloadAndSave("hy_download_water_yq", ysqObject.getStr("excel"), ysqObject.getStr("image"));
-        }
+        log.error("站点 {} 爬取任务超时 task={}", site, taskId);
+        return null;
     }
 
-    public void downloadAndSave(String tableName, String excelPath, String imagePath) {
+    public boolean downloadAndSave(String tableName, String excelPath, String imagePath) {
         Boolean prod = SystemConfig.getWaterDownloadProd();
-        if (!prod) return;
+        if (!prod) return false;
         String waterDownloadUrl = SystemConfig.getWaterDownloadUrl();
         String crawlUrl = StrUtil.format("{}/download", waterDownloadUrl);
         Entity params = Entity.create().set("path", excelPath).set("token", SystemConfig.getWaterDownloadToken());
         HttpRequest httpRequest = HttpUtil.createPost(crawlUrl).timeout(-1).body(JSONUtil.toJsonStr(params));
 
-        GetDbUtils.insertOrUpdate(
-                Entity.create()
-                        .set("tableName", "hy_download_water_date_mapping")
-                        .set("data_date", DateUtil.today())
-                        .set("data_type", tableName)
-                        .set("data_excel_path", excelPath)
-                        .set("data_png_path", imagePath)
-                        .set("create_time", null)
-                        .set("update_time", null)
-
-        );
-
         try (HttpResponse response = httpRequest.execute(false)) {
+            if (!response.isOk()) {
+                log.error("下载 Excel 失败 http={} path={}", response.getStatus(), excelPath);
+                return false;
+            }
             InputStream inputStream = response.bodyStream();
             ExcelReader reader = ExcelUtil.getReader(inputStream);
             List<List<Object>> readList = reader.read();
+            if (readList == null || readList.isEmpty()) {
+                log.error("Excel 无数据行，放弃入库 path={}", excelPath);
+                return false;
+            }
             List<Entity> saveValues = new ArrayList<>();
             switch (tableName) {
                 case "hy_download_water_dj":
@@ -152,13 +207,30 @@ public class WaterDownloadTask {
                             )
                     );
             List<Entity> values = entityMap.keySet().stream().map(entityMap::get).collect(Collectors.toList());
+            if (values.isEmpty()) {
+                log.error("解析后无有效数据行，放弃入库 table={} path={}", tableName, excelPath);
+                return false;
+            }
             GetDbUtils.insertOrUpdate(tableName, values);
             // 以当日 Excel 为权威，自动补全映射字典与流域白名单
             this.upsertMappingFromExcel(tableName, readList);
+            // 入库成功后才登记日期映射，避免失败时前端拿到无效文件路径
+            GetDbUtils.insertOrUpdate(
+                    Entity.create()
+                            .set("tableName", "hy_download_water_date_mapping")
+                            .set("data_date", DateUtil.today())
+                            .set("data_type", tableName)
+                            .set("data_excel_path", excelPath)
+                            .set("data_png_path", imagePath)
+                            .set("create_time", null)
+                            .set("update_time", null)
+            );
             inputStream.close();
             reader.close();
+            return true;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            return false;
         }
 
     }

@@ -1,0 +1,28 @@
+services:
+  water-download:
+    build: .
+    image: water-download:v1
+    container_name: water-download
+    ports:
+      - "18883:18883"
+    environment:
+      - TZ=Asia/Shanghai
+      - VERIFY_TOKEN=${VERIFY_TOKEN:-1777542103}
+      # 容器内默认 CPU 推理；有 NVIDIA GPU 可改为 cuda
+      - OCR_DEVICE=${OCR_DEVICE:-cpu}
+      # 页面加载超时（秒），大江大河页面大、偶发加载慢
+      - PAGE_LOAD_TIMEOUT=${PAGE_LOAD_TIMEOUT:-180}
+      # 表格加载稳定等待窗口（秒），生产服务器响应慢时可调大
+      - TABLE_STABLE_TIMEOUT=${TABLE_STABLE_TIMEOUT:-120}
+      # 单站重试次数与退避基数（秒）
+      - CRAWL_MAX_ATTEMPTS=${CRAWL_MAX_ATTEMPTS:-3}
+      - CRAWL_RETRY_BACKOFF=${CRAWL_RETRY_BACKOFF:-60}
+    volumes:
+      - ./main.py:/app/main.py
+      - ./water_download.py:/app/water_download.py
+      - ./save_images:/app/save_images
+
+    # 可选：指定工作目录
+    working_dir: /app
+    # 可选：自动重启
+    restart: unless-stopped
